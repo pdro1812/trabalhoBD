@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciar Categorias</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/categoria.css" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Botão de voltar -->
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
+    </svg>
+    Voltar
+  </a>
+
+  <!-- Logo -->
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <!-- Container -->
+  <div class="container">
+    <h1>Gerenciar Categorias</h1>
+
+    <!-- Tabela de categorias -->
+    <table>
+      <thead>
+        <tr>
+          <th>Nome da Categoria</th>
+          <th class="checkbox-column">Selecionar</th>
+        </tr>
+      </thead>
+      <tbody id="categoryTableBody">
+        <tr>
+          <td>Bebidas</td>
+          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Botões -->
+    <div class="button-group">
+      <button onclick="toggleCategoryForm()">Adicionar Categoria</button>
+      <button onclick="editCategory()">Editar Categoria</button>
+      <button onclick="removeSelectedCategories()">Remover Selecionadas</button>
+    </div>
+
+    <!-- Formulário de categoria -->
+    <form id="categoryForm" style="display: none;">
+      <div class="form-group">
+        <label for="categoryName">Nome da Categoria</label>
+        <input type="text" id="categoryName" placeholder="Digite o nome da categoria" required>
+      </div>
+      <button type="submit">Salvar Categoria</button>
+    </form>
+  </div>
+
+  <script>
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryTableBody = document.getElementById('categoryTableBody');
+    let editingRow = null;
+
+    function toggleCategoryForm() {
+      categoryForm.style.display = categoryForm.style.display === 'none' ? 'block' : 'none';
+    }
+
+    categoryForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('categoryName').value;
+
+      if (editingRow) {
+        editingRow.cells[0].textContent = name;
+        editingRow = null;
+      } else {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${name}</td>
+          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+        `;
+        categoryTableBody.appendChild(row);
+      }
+
+      categoryForm.reset();
+      categoryForm.style.display = 'none';
+    });
+
+    function editCategory() {
+      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+      if (checkboxes.length !== 1) {
+        alert('Por favor, selecione exatamente uma categoria para editar.');
+        return;
+      }
+
+      editingRow = checkboxes[0].closest('tr');
+      document.getElementById('categoryName').value = editingRow.cells[0].textContent;
+      categoryForm.style.display = 'block';
+    }
+
+    function removeSelectedCategories() {
+      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+      checkboxes.forEach((checkbox) => {
+        const row = checkbox.closest('tr');
+        row.remove();
+      });
+    }
+  </script>
+</body>
+</html>

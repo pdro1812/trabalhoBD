@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciar Administradores</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/administradores.css" rel="stylesheet">
+
+ 
+</head>
+<body>
+
+  <!-- Botão de voltar -->
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
+    </svg>
+    Voltar
+  </a>
+
+  <!-- Logo -->
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <!-- Container -->
+  <div class="container">
+    <h1>Gerenciar Administradores</h1>
+
+    <!-- Tabela de administradores -->
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Email</th>
+          <th class="checkbox-column">Selecionar</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody">
+        <tr>
+          <td>João Silva</td>
+          <td>123.456.789-00</td>
+          <td>joao@scapini.com</td>
+          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Botões para adicionar, editar e remover -->
+    <div class="button-group">
+      <button onclick="toggleAdminForm()">Adicionar Administrador</button>
+      <button onclick="editAdmin()">Editar Administrador</button>
+      <button onclick="removeSelectedAdmins()">Remover Selecionados</button>
+    </div>
+
+    <!-- Formulário para adicionar administrador -->
+    <form id="adminForm">
+      <div class="form-group">
+        <label for="adminName">Nome</label>
+        <input type="text" id="adminName" placeholder="Digite o nome" required>
+      </div>
+      <div class="form-group">
+        <label for="adminCPF">CPF</label>
+        <input type="text" id="adminCPF" placeholder="Digite o CPF" required>
+      </div>
+      <div class="form-group">
+        <label for="adminEmail">Email</label>
+        <input type="email" id="adminEmail" placeholder="Digite o email" required>
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">Senha</label>
+        <input type="password" id="adminPassword" placeholder="Digite a senha" required>
+      </div>
+      <button type="submit">Salvar Administrador</button>
+    </form>
+  </div>
+
+  <script>
+    const adminForm = document.getElementById('adminForm');
+    const adminTableBody = document.getElementById('adminTableBody');
+    let editingRow = null; // Variável para armazenar a linha que está sendo editada
+
+    // Alternar visibilidade do formulário
+    function toggleAdminForm() {
+      adminForm.style.display = adminForm.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // Adicionar ou salvar administrador
+    adminForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('adminName').value;
+      const cpf = document.getElementById('adminCPF').value;
+      const email = document.getElementById('adminEmail').value;
+
+      if (editingRow) {
+        // Atualizar a linha existente
+        editingRow.cells[0].textContent = name;
+        editingRow.cells[1].textContent = cpf;
+        editingRow.cells[2].textContent = email;
+        editingRow = null; // Limpar a variável de edição
+      } else {
+        // Adicionar uma nova linha
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>${cpf}</td>
+          <td>${email}</td>
+          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+        `;
+        adminTableBody.appendChild(row);
+      }
+
+      // Limpar formulário e escondê-lo
+      adminForm.reset();
+      adminForm.style.display = 'none';
+    });
+
+    // Editar administrador
+    function editAdmin() {
+      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+      if (checkboxes.length !== 1) {
+        alert('Por favor, selecione exatamente um administrador para editar.');
+        return;
+      }
+
+      // Obter a linha selecionada
+      editingRow = checkboxes[0].closest('tr');
+
+      // Preencher o formulário com os dados do administrador
+      document.getElementById('adminName').value = editingRow.cells[0].textContent;
+      document.getElementById('adminCPF').value = editingRow.cells[1].textContent;
+      document.getElementById('adminEmail').value = editingRow.cells[2].textContent;
+
+      // Exibir o formulário
+      adminForm.style.display = 'block';
+    }
+
+    // Remover administradores selecionados
+    function removeSelectedAdmins() {
+      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+      checkboxes.forEach((checkbox) => {
+        const row = checkbox.closest('tr');
+        row.remove();
+      });
+    }
+  </script>
+</body>
+</html>

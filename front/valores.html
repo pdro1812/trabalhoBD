@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valores Padrões</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/valores.css" rel="stylesheet">
+
+ 
+</head>
+<body>
+
+  <!-- Botão de voltar -->
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
+    </svg>
+    Voltar
+  </a>
+
+  <!-- Logo -->
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <!-- Container -->
+  <div class="container">
+    <h1>Valores Padrões</h1>
+
+    <!-- Formulário para adicionar valores padrões -->
+    <form id="valoresForm">
+      <div class="form-group">
+        <label for="dataVigencia">Data de Vigência</label>
+        <input type="date" id="dataVigencia" required>
+      </div>
+      <div class="form-group">
+        <label for="dataFim">Data de Fim</label>
+        <input type="date" id="dataFim" required>
+      </div>
+      <div class="form-group">
+        <label for="valorLivre">Valor Livre</label>
+        <input type="number" id="valorLivre" placeholder="Digite o valor livre" required>
+      </div>
+      <div class="form-group">
+        <label for="valorMarmita">Valor Marmita</label>
+        <input type="number" id="valorMarmita" placeholder="Digite o valor da marmita" required>
+      </div>
+      <div class="form-group">
+        <label for="valorKg">Valor por Kg</label>
+        <input type="number" id="valorKg" placeholder="Digite o valor por Kg" required>
+      </div>
+      <button type="submit">Salvar Valores</button>
+    </form>
+
+    <!-- Tabela de valores padrões -->
+    <table>
+      <thead>
+        <tr>
+          <th>Data de Vigência</th>
+          <th>Data de Fim</th>
+          <th>Valor Livre</th>
+          <th>Valor Marmita</th>
+          <th>Valor por Kg</th>
+        </tr>
+      </thead>
+      <tbody id="valoresTableBody">
+        <!-- Os valores padrões serão adicionados dinamicamente aqui -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const valoresForm = document.getElementById('valoresForm');
+    const valoresTableBody = document.getElementById('valoresTableBody');
+
+    // Adicionar valores padrões
+    valoresForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const dataVigencia = document.getElementById('dataVigencia').value;
+      const dataFim = document.getElementById('dataFim').value;
+      const valorLivre = document.getElementById('valorLivre').value;
+      const valorMarmita = document.getElementById('valorMarmita').value;
+      const valorKg = document.getElementById('valorKg').value;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${dataVigencia}</td>
+        <td>${dataFim}</td>
+        <td>${valorLivre}</td>
+        <td>${valorMarmita}</td>
+        <td>${valorKg}</td>
+      `;
+      valoresTableBody.appendChild(row);
+
+      // Limpar formulário
+      valoresForm.reset();
+    });
+  </script>
+</body>
+</html>

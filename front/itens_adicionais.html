@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Itens Adicionais</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/itens_adicionais.css" rel="stylesheet">  
+</head>
+<body>
+
+  <!-- Botão de voltar -->
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
+    </svg>
+    Voltar
+  </a>
+
+  <!-- Logo -->
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <div class="container">
+    <h1>Gerenciar Itens Adicionais</h1>
+
+    <!-- Formulário para adicionar item -->
+    <form id="itemForm">
+      <input type="hidden" id="itemId">
+      <div class="form-group">
+        <label for="itemInput">Nome do Item</label>
+        <input list="itemNameList" id="itemName" name="itemName" placeholder="Digite o nome do item" required>
+        <datalist id="itemNameList">
+          <option value="Coca cola">
+          <option value="Trident">
+        </datalist>      
+      </div>
+      
+      <div class="form-group">
+        <label for="itemValue">Valor do Item</label>
+        <input type="number" id="itemValue" placeholder="Digite o valor do item" step="0.01" required>
+      </div>
+
+      <div class="form-group">
+        <label for="itemQuantity">Quantidade</label>
+        <input type="number" id="itemQuantity" placeholder="Digite a quantidade" value="1" required>
+      </div>
+
+      <div class="form-group">
+        <label for="itemCategory">Categoria</label>
+        <select id="itemCategory" required>
+          <option value="">Selecione uma categoria</option>
+          <option value="Item Extra">Item Extra</option>
+          <option value="Bebida">Bebida</option>
+          <option value="Outros">Outros</option>
+        </select>
+      </div>
+      
+      <button type="submit">Adicionar Item</button>
+    </form>
+
+    <!-- Caixa de busca -->
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Pesquisar itens...">
+    </div>
+
+    <!-- Tabela de itens -->
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Valor</th>
+          <th>Quantidade</th>
+          <th>Categoria</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      
+      <tbody id="itemTableBody">
+        <!-- Os itens serão adicionados dinamicamente aqui -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const itemForm = document.getElementById('itemForm');
+    const itemTableBody = document.getElementById('itemTableBody');
+    const searchInput = document.getElementById('searchInput');
+    let nextId = 1;
+
+    // Adicionar item
+    itemForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const id = document.getElementById('itemId').value || nextId++;
+      const name = document.getElementById('itemName').value;
+      const value = document.getElementById('itemValue').value;
+      const quantity = document.getElementById('itemQuantity').value;
+      const category = document.getElementById('itemCategory').value;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${id}</td>
+        <td>${name}</td>
+        <td>R$ ${parseFloat(value).toFixed(2)}</td>
+        <td>${quantity}</td>
+        <td>${category}</td>
+        <td class="actions">
+          <button class="edit" onclick="editItem(this)">Editar</button>
+          <button class="delete" onclick="deleteItem(this)">Excluir</button>
+        </td>
+      `;
+    
+      itemTableBody.appendChild(row);
+
+      // Limpar formulário
+      document.getElementById('itemId').value = '';
+      itemForm.reset();
+    });
+
+    // Editar item
+    function editItem(button) {
+      const row = button.parentElement.parentElement;
+      const id = row.children[0].textContent;
+      const name = row.children[1].textContent;
+      const value = row.children[2].textContent.replace('R$ ', '');
+      const quantity = row.children[3].textContent;
+      const category = row.children[4].textContent;
+
+      document.getElementById('itemId').value = id;
+      document.getElementById('itemName').value = name;
+      document.getElementById('itemValue').value = value;
+      document.getElementById('itemQuantity').value = quantity;
+      document.getElementById('itemCategory').value = category;
+
+      // Remover a linha para evitar duplicação
+      row.remove();
+    }
+
+    // Excluir item
+    function deleteItem(button) {
+      const row = button.parentElement.parentElement;
+      row.remove();
+    }
+
+    // Filtrar itens na tabela
+    searchInput.addEventListener('input', () => {
+      const filter = searchInput.value.toLowerCase();
+      const rows = itemTableBody.querySelectorAll('tr');
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        const match = Array.from(cells).some(cell => cell.textContent.toLowerCase().includes(filter));
+        row.style.display = match ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

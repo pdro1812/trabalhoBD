@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Refeição</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/refeicao.css" rel="stylesheet">
+
+
+</head>
+<body>
+
+  <!-- Botão de voltar -->
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
+    </svg>
+    Voltar
+  </a>
+
+  <!-- Logo -->
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <!-- Container -->
+  <div class="container">
+    <h1>Refeição</h1>
+
+    <!-- Tipo de Pessoa -->
+    <div class="form-group">
+      <label for="tipoPessoa">Tipo de Cliente:</label>
+      <select id="tipoPessoa" onchange="exibirCamposPorTipo()">
+        <option value="">Selecione o tipo</option>
+        <option value="fisica">Pessoa Física</option>
+        <option value="juridica">Empresa</option>
+      </select>
+    </div>
+
+    <!-- Campos para Jurídica -->
+    <div id="juridicaCampos" style="display: none;">
+      <div class="form-group">
+        <label for="empresa">Empresa:</label>
+        <input list="empresas" id="empresa" name="empresa" placeholder="Digite o nome da empresa">
+        <datalist id="empresas">
+          <option value="Empresa A">
+          <option value="Empresa B">
+          <option value="Empresa C">
+          <option value="Empresa D">
+        </datalist>
+      </div>
+
+      <div class="form-group">
+        <label for="cliente">Cliente:</label>
+        <input list="clientes" id="cliente" name="cliente" placeholder="Digite o nome do cliente">
+        <datalist id="clientes">
+          <option value="Carlos Silva">
+          <option value="Ana Lima">
+          <option value="Nome1">
+        </datalist>
+      </div>
+      
+      <div class="form-group">
+        <label for="tipoRefeicao">Tipo de Refeição:</label>
+        <select id="tipoRefeicao" onchange="mostrarCampoPeso('tipoRefeicao', 'campoPeso')">
+          <option value="">Selecione o Tipo de Refeição</option>
+          <option value="refeicaoLivre">Refeição Livre</option>
+          <option value="refeicaoPorKg">Refeição por Kg</option>
+          <option value="marmita">Marmita</option>
+        </select>
+      </div>
+      
+      <div class="form-group" id="campoPeso" style="display: none;">
+        <label for="peso">Peso (kg):</label>
+        <input type="number" id="peso" name="peso" step="0.01" min="0">
+      </div>
+      <!-- Campo para Adicionar Adicional e Quantidade -->
+      <div class="form-group">
+        <label for="adicionalJuridica">Adicionar Adicional:</label>
+        <select id="adicionalJuridica">
+          <option value="">Selecione um Adicional</option>
+          <option value="batataFrita">Batata Frita</option>
+          <option value="salada">Salada</option>
+          <option value="bebida">Bebida</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="quantidadeJuridica">Quantidade:</label>
+        <input type="number" id="quantidadeJuridica" min="1" placeholder="Digite a quantidade do item adicional">
+      </div>
+      <div class="payment-group">
+        <span>Valor: R$ 00,00</span>
+        <button onclick="finalizarPedido('Empresa')">Pagar pela Empresa</button>
+      </div>
+    </div>
+
+    <!-- Campos para Física -->
+    <div id="fisicaCampos" style="display: none;">
+      <div class="form-group">
+        <label for="cliente">Cliente:</label>
+        <input list="clientes" id="cliente" name="cliente" placeholder="Digite o nome do cliente">
+        <datalist id="clientes">
+          <option value="Carlos Silva">
+          <option value="Ana Lima">
+          <option value="Nome1">
+        </datalist>
+      </div>
+      
+      <div class="form-group">
+        <label for="tipoRefeicaoFisica">Tipo de Refeição:</label>
+        <select id="tipoRefeicaoFisica" onchange="mostrarCampoPeso('tipoRefeicaoFisica', 'campoPesoFisico')">
+          <option value="">Selecione o Tipo de Refeição</option>
+          <option value="refeicaoLivre">Refeição Livre</option>
+          <option value="refeicaoPorKg">Refeição por Kg</option>
+          <option value="marmita">Marmita</option>
+        </select>
+      </div>
+      
+      <div class="form-group" id="campoPesoFisico" style="display: none;">
+        <label for="pesoFisico">Peso (kg):</label>
+        <input type="number" id="pesoFisico" name="pesoFisico" step="0.01" min="0">
+      </div>
+      <!-- Campo para Adicionar Adicional e Quantidade -->
+      <div class="form-group">
+        <label for="adicionalFisica">Adicionar Adicional:</label>
+        <select id="adicionalFisica">
+          <option value="">Selecione um Adicional</option>
+          <option value="batataFrita">Batata Frita</option>
+          <option value="salada">Salada</option>
+          <option value="bebida">Bebida</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="quantidadeFisica">Quantidade:</label>
+        <input type="number" id="quantidadeFisica" min="1" placeholder="Digite a quantidade do item adicional">
+      </div>
+      <div class="payment-group">
+        <span>Valor: R$ 00,00</span>
+        <button onclick="finalizarPedido('Cliente')">Pagar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function exibirCamposPorTipo() {
+      const tipo = document.getElementById("tipoPessoa").value;
+      document.getElementById("juridicaCampos").style.display = tipo === "juridica" ? "block" : "none";
+      document.getElementById("fisicaCampos").style.display = tipo === "fisica" ? "block" : "none";
+    }
+
+
+    function mostrarCampoPeso(selectId, campoPesoId) {
+      const tipoRefeicao = document.getElementById(selectId).value;
+      const campoPeso = document.getElementById(campoPesoId);
+  
+      if (tipoRefeicao === "refeicaoPorKg") {
+        campoPeso.style.display = "block";
+      } else {
+        campoPeso.style.display = "none";
+      }
+    }
+    
+    function atualizarFuncionarios() {
+      const funcionarioSelect = document.getElementById("funcionario");
+      funcionarioSelect.innerHTML = `
+        <option value="">Selecione o Funcionário</option>
+        <option value="1">João Souza</option>
+        <option value="2">Mariana Costa</option>
+      `;
+    }
+
+    function finalizarPedido(pagador) {
+      alert("Pedido finalizado por: " + pagador);
+    }
+  </script>
+</body>
+</html>
