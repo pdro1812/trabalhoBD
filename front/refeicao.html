@@ -128,11 +128,10 @@
           <option value="salada">Salada</option>
           <option value="bebida">Bebida</option>
         </select>
+        <input type="number" id="quantidadeFisica" min="1" placeholder="Quantidade">
+        <button type="button" onclick="adicionarAdicionalFisica()">Adicionar</button>
       </div>
-      <div class="form-group">
-        <label for="quantidadeFisica">Quantidade:</label>
-        <input type="number" id="quantidadeFisica" min="1" placeholder="Digite a quantidade do item adicional">
-      </div>
+      <ul id="listaAdicionaisFisica"></ul>
       <div class="payment-group">
         <span>Valor: R$ 00,00</span>
         <button onclick="finalizarPedido('Cliente')">Pagar</button>
@@ -170,6 +169,37 @@
 
     function finalizarPedido(pagador) {
       alert("Pedido finalizado por: " + pagador);
+    }
+
+    let adicionaisFisica = [];
+
+    function adicionarAdicionalFisica() {
+      const adicional = document.getElementById('adicionalFisica').value;
+      const quantidade = document.getElementById('quantidadeFisica').value;
+      if (adicional && quantidade > 0) {
+        adicionaisFisica.push({ adicional, quantidade });
+        atualizarListaAdicionaisFisica();
+        document.getElementById('adicionalFisica').value = '';
+        document.getElementById('quantidadeFisica').value = '';
+      }
+    }
+
+    function atualizarListaAdicionaisFisica() {
+      const lista = document.getElementById('listaAdicionaisFisica');
+      lista.innerHTML = '';
+      adicionaisFisica.forEach((item, idx) => {
+        const li = document.createElement('li');
+        li.textContent = `${item.adicional} - Quantidade: ${item.quantidade}`;
+        // Botão para remover
+        const btn = document.createElement('button');
+        btn.textContent = 'Remover';
+        btn.onclick = () => {
+          adicionaisFisica.splice(idx, 1);
+          atualizarListaAdicionaisFisica();
+        };
+        li.appendChild(btn);
+        lista.appendChild(li);
+      });
     }
   </script>
 </body>

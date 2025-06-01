@@ -33,10 +33,6 @@
         </tr>
       </thead>
       <tbody id="categoryTableBody">
-        <tr>
-          <td>Bebidas</td>
-          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
-        </tr>
       </tbody>
     </table>
 
@@ -58,26 +54,71 @@
   </div>
 
   <script>
-    const categoryForm = document.getElementById('categoryForm');
-    const categoryTableBody = document.getElementById('categoryTableBody');
-    let editingRow = null;
+  const categoryForm = document.getElementById('categoryForm');
+  const categoryTableBody = document.getElementById('categoryTableBody');
+  let editingRow = null;
+  let editingId = null;
 
-    function toggleCategoryForm() {
-      categoryForm.style.display = categoryForm.style.display === 'none' ? 'block' : 'none';
-    }
+  async function carregarCategorias() {
+    try {
+      const res = await fetch('/categorias');
+      const categorias = await res.json();
 
-    categoryForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+      categoryTableBody.innerHTML = '';
 
-      const name = document.getElementById('categoryName').value;
-
-      if (editingRow) {
-        editingRow.cells[0].textContent = name;
-        editingRow = null;
-      } else {
+      categorias.forEach(categoria => {
         const row = document.createElement('tr');
+        row.setAttribute('id_categoria', categoria.id_categoria);
         row.innerHTML = `
-          <td>${name}</td>
+          <td>${categoria.nome}</td>
+          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+        `;
+        categoryTableBody.appendChild(row);
+      });
+    } catch (err) {
+      console.error('Erro ao carregar categorias:', err);
+    }
+  }
+
+  function toggleCategoryForm() {
+    categoryForm.style.display = categoryForm.style.display === 'none' ? 'block' : 'none';
+    editingId = null;
+    editingRow = null;
+    categoryForm.reset();
+  }
+
+  categoryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('categoryName').value;
+
+    if (!name) return alert('Informe o nome da categoria.');
+
+    try {
+      if (editingId) {
+        const res = await fetch(`/categorias/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: name })
+        });
+
+        if (!res.ok) throw new Error('Erro ao editar no banco.');
+
+        const updated = await res.json();
+        editingRow.cells[0].textContent = updated.nome;
+      } else {
+        const res = await fetch('/categorias', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nome: name })
+        });
+
+        if (!res.ok) throw new Error('Erro ao salvar no banco.');
+
+        const novaCategoria = await res.json();
+        const row = document.createElement('tr');
+        row.setAttribute('id_categoria', novaCategoria.id);
+        row.innerHTML = `
+          <td>${novaCategoria.nome}</td>
           <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
         `;
         categoryTableBody.appendChild(row);
@@ -85,27 +126,44 @@
 
       categoryForm.reset();
       categoryForm.style.display = 'none';
-    });
+      editingRow = null;
+      editingId = null;
+    } catch (err) {
+      alert('Erro ao salvar categoria.');
+      console.error(err);
+    }
+  });
 
-    function editCategory() {
-      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
-      if (checkboxes.length !== 1) {
-        alert('Por favor, selecione exatamente uma categoria para editar.');
-        return;
+  function editCategory() {
+    const checkbox = document.querySelector('.remove-checkbox:checked');
+    if (!checkbox) return alert('Selecione uma categoria para editar.');
+
+    editingRow = checkbox.closest('tr');
+    editingId = editingRow.getAttribute('id_categoria');
+    document.getElementById('categoryName').value = editingRow.cells[0].textContent;
+    categoryForm.style.display = 'block';
+  }
+
+  async function removeSelectedCategories() {
+    const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+
+    for (const checkbox of checkboxes) {
+      const row = checkbox.closest('tr');
+      const id = row.getAttribute('id_categoria');
+
+      try {
+        const res = await fetch(`/categorias/${id}`, { method: 'DELETE' });
+        if (res.ok) row.remove();
+        else console.error(`Erro ao remover categoria ${id}`);
+      } catch (err) {
+        console.error(`Erro ao remover categoria ${id}:`, err);
       }
-
-      editingRow = checkboxes[0].closest('tr');
-      document.getElementById('categoryName').value = editingRow.cells[0].textContent;
-      categoryForm.style.display = 'block';
     }
+  }
 
-    function removeSelectedCategories() {
-      const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
-      checkboxes.forEach((checkbox) => {
-        const row = checkbox.closest('tr');
-        row.remove();
-      });
-    }
-  </script>
+  // Carrega ao abrir
+  window.onload = carregarCategorias;
+</script>
+
 </body>
 </html>

@@ -1,14 +1,27 @@
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 
-const app = express();
-const PORT = 3000;
+const { validarConexao } = require('./db');
+const categoriaRoutes = require('./controllers/categoria');
+const indexRoutes = require('./routes/index'); 
 
-// Servir arquivos estáticos (HTML, CSS, etc.)
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Conexão com o banco
+validarConexao();
+
+// Servindo arquivos estáticos
 app.use(express.static(path.join(__dirname, '../front')));
 
+// Rotas
+app.use('/', indexRoutes);          // 👈 rota principal
+app.use('/categorias', categoriaRoutes);
 
-// Iniciar servidor
-app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
+// Inicialização do servidor
+app.listen(3000, () => {
+  console.log('Servidor rodando na porta 3000');
 });
