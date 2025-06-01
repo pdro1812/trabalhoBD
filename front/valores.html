@@ -69,32 +69,66 @@
   </div>
 
   <script>
-    const valoresForm = document.getElementById('valoresForm');
-    const valoresTableBody = document.getElementById('valoresTableBody');
+  const valoresForm = document.getElementById('valoresForm');
+  const valoresTableBody = document.getElementById('valoresTableBody');
 
-    // Adicionar valores padrões
-    valoresForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+  // Carregar dados existentes
+  async function carregarValores() {
+    const resposta = await fetch('/valores');
+    const valores = await resposta.json();
 
-      const dataVigencia = document.getElementById('dataVigencia').value;
-      const dataFim = document.getElementById('dataFim').value;
-      const valorLivre = document.getElementById('valorLivre').value;
-      const valorMarmita = document.getElementById('valorMarmita').value;
-      const valorKg = document.getElementById('valorKg').value;
+    valoresTableBody.innerHTML = '';
 
+    valores.forEach(valor => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${dataVigencia}</td>
-        <td>${dataFim}</td>
-        <td>${valorLivre}</td>
-        <td>${valorMarmita}</td>
-        <td>${valorKg}</td>
+        <td>${valor.data_vigencia}</td>
+        <td>${valor.data_fim}</td>
+        <td>${valor.valor_livre}</td>
+        <td>${valor.valor_marmita}</td>
+        <td>${valor.valor_kg}</td>
       `;
       valoresTableBody.appendChild(row);
-
-      // Limpar formulário
-      valoresForm.reset();
     });
-  </script>
+  }
+
+  carregarValores();
+
+  valoresForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const dataVigencia = document.getElementById('dataVigencia').value;
+    const dataFim = document.getElementById('dataFim').value;
+    const valorLivre = document.getElementById('valorLivre').value;
+    const valorMarmita = document.getElementById('valorMarmita').value;
+    const valorKg = document.getElementById('valorKg').value;
+
+    const dados = {
+      data_vigencia: dataVigencia,
+      data_fim: dataFim,
+      valor_livre: parseFloat(valorLivre),
+      valor_marmita: parseFloat(valorMarmita),
+      valor_kg: parseFloat(valorKg)
+    };
+
+    const resposta = await fetch('/valores', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dados)
+    });
+
+    if (resposta.ok) {
+      alert('Valores salvos com sucesso!');
+      valoresForm.reset();
+      carregarValores();
+    } else {
+      const erro = await resposta.json();
+      alert('Erro ao salvar: ' + erro.erro);
+    }
+  });
+</script>
+
 </body>
 </html>
