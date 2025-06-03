@@ -7,6 +7,7 @@ const categoriaRoutes = require('./controllers/categoria');
 const valoresRoutes = require('./controllers/valoresController');
 const indexRoutes = require('./routes/index');
 
+
 const app = express();
 
 app.use(cors());
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, '../front')));
 app.use('/', indexRoutes);
 app.use('/categorias', categoriaRoutes);
 app.use('/valores', valoresRoutes);
+app.use('/itemadicional', categoriaRoutes);
 
 
 

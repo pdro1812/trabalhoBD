@@ -34,10 +34,15 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { nome } = req.body;
 
+  const idInt = parseInt(id, 10);
+  if (isNaN(idInt)) {
+    return res.status(400).json({ erro: 'ID inválido.' });
+  }
+
   try {
     const result = await pool.query(
       'UPDATE categoria SET nome = $1 WHERE id_categoria = $2 RETURNING *',
-      [nome, id]
+      [nome, idInt]
     );
     if (result.rowCount === 0) return res.status(404).json({ erro: 'Categoria não encontrada.' });
     res.json(result.rows[0]);
@@ -46,6 +51,7 @@ router.put('/:id', async (req, res) => {
     res.status(500).json({ erro: 'Erro interno.' });
   }
 });
+
 
 // Remover categoria
 router.delete('/:id', async (req, res) => {
@@ -58,6 +64,21 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao remover categoria:', err);
     res.status(500).json({ erro: 'Erro interno.' });
+  }
+});
+
+
+router.post('/itemadicional', async (req, res) => {
+  const { cod_categoria, nome_item, valor } = req.body;
+  try {
+    await db.query(
+      'INSERT INTO itemadicional (cod_categoria, nome_item, valor) VALUES ($1, $2, $3)',
+      [cod_categoria, nome_item, valor]
+    );
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
   }
 });
 

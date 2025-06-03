@@ -47,12 +47,9 @@
 
       <div class="form-group">
         <label for="itemCategory">Categoria</label>
-        <select id="itemCategory" required>
-          <option value="">Selecione uma categoria</option>
-          <option value="Item Extra">Item Extra</option>
-          <option value="Bebida">Bebida</option>
-          <option value="Outros">Outros</option>
-        </select>
+       <select id="itemCategory" required>
+        <option value="">Selecione uma categoria</option>
+      </select>
       </div>
       
       <button type="submit">Adicionar Item</button>
@@ -90,33 +87,39 @@
 
     // Adicionar item
     itemForm.addEventListener('submit', (e) => {
-      e.preventDefault();
+  e.preventDefault();
 
-      const id = document.getElementById('itemId').value || nextId++;
-      const name = document.getElementById('itemName').value;
-      const value = document.getElementById('itemValue').value;
-      const quantity = document.getElementById('itemQuantity').value;
-      const category = document.getElementById('itemCategory').value;
+  const name = document.getElementById('itemName').value;
+  const value = parseFloat(document.getElementById('itemValue').value);
+  const quantity = parseInt(document.getElementById('itemQuantity').value);
+  const codCategoria = parseInt(document.getElementById('itemCategory').value);
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${id}</td>
-        <td>${name}</td>
-        <td>R$ ${parseFloat(value).toFixed(2)}</td>
-        <td>${quantity}</td>
-        <td>${category}</td>
-        <td class="actions">
-          <button class="edit" onclick="editItem(this)">Editar</button>
-          <button class="delete" onclick="deleteItem(this)">Excluir</button>
-        </td>
-      `;
-    
-      itemTableBody.appendChild(row);
+  const item = {
+    nome_item: name,
+    valor: value,
+    quantidade: quantity, // mesmo que não vá pro banco agora, já aproveita
+    cod_categoria: codCategoria
+  };
 
-      // Limpar formulário
-      document.getElementById('itemId').value = '';
+  fetch('/itemadicional', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(item)
+  }).then(res => {
+    if (res.ok) {
+      alert('Item salvo com sucesso!');
       itemForm.reset();
-    });
+    } else {
+      alert('Erro ao salvar o item.');
+    }
+  }).catch(err => {
+    console.error('Erro na requisição:', err);
+    alert('Erro ao salvar item.');
+  });
+});
+
 
     // Editar item
     function editItem(button) {
@@ -154,6 +157,23 @@
         row.style.display = match ? '' : 'none';
       });
     });
+
+      // Carregar categorias do banco ao carregar a página
+      fetch('/categorias')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('itemCategory');
+          data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id_categoria;
+            option.textContent = cat.nome;
+            select.appendChild(option);
+          });
+        })
+        .catch(err => {
+          console.error('Erro ao carregar categorias:', err);
+        });
+
   </script>
 </body>
 </html>
