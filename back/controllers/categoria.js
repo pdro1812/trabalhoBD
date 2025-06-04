@@ -68,18 +68,4 @@ router.delete('/:id', async (req, res) => {
 });
 
 
-router.post('/itemadicional', async (req, res) => {
-  const { cod_categoria, nome_item, valor } = req.body;
-  try {
-    await db.query(
-      'INSERT INTO itemadicional (cod_categoria, nome_item, valor) VALUES ($1, $2, $3)',
-      [cod_categoria, nome_item, valor]
-    );
-    res.sendStatus(200);
-  } catch (err) {
-    console.error(err);
-    res.sendStatus(500);
-  }
-});
-
 module.exports = router;
