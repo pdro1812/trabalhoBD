@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Gerenciar Clientes PF</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/lista_clientes.css" rel="stylesheet">
+</head>
+<body>
+  <a href="tela_principal.html" class="back-button">← Voltar</a>
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+
+  <div class="container">
+    <h1>Clientes - Pessoa Física</h1>
+
+    <form id="formPF">
+      <div class="form-group">
+        <label for="nome">Nome</label>
+        <input type="text" id="nome" required>
+      </div>
+      <div class="form-group">
+        <label for="cpf">CPF</label>
+        <input type="text" id="cpf" required>
+      </div>
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input type="text" id="telefone" required>
+      </div>
+      <div class="form-group">
+        <label for="empresa">Empresa</label>
+        <select id="empresa" required>
+          <option value="Empresa1">Empresa1</option>
+          <option value="Empresa2">Empresa2</option>
+        </select>
+      </div>
+      <button type="submit">Adicionar Cliente</button>
+    </form>
+
+    <div class="search-box">
+      <input type="text" id="busca" placeholder="Buscar...">
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Telefone</th>
+          <th>Empresa</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaPF"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const form = document.getElementById('formPF');
+    const tabela = document.getElementById('tabelaPF');
+    const busca = document.getElementById('busca');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById('nome').value;
+      const cpf = document.getElementById('cpf').value;
+      const telefone = document.getElementById('telefone').value;
+      const empresa = document.getElementById('empresa').value;
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${nome}</td>
+        <td>${cpf}</td>
+        <td>${telefone}</td>
+        <td>${empresa}</td>
+        <td>
+          <button onclick="editar(this)">Editar</button>
+          <button onclick="excluir(this)">Excluir</button>
+        </td>
+      `;
+      tabela.appendChild(row);
+
+      /*
+      await fetch('/clientes/pf', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ nome, cpf, telefone, empresa })
+      });
+      */
+
+      form.reset();
+    });
+
+    function editar(btn) {
+      const row = btn.parentElement.parentElement;
+      const cells = row.children;
+      document.getElementById('nome').value = cells[0].textContent;
+      document.getElementById('cpf').value = cells[1].textContent;
+      document.getElementById('telefone').value = cells[2].textContent;
+      document.getElementById('empresa').value = cells[3].textContent;
+      row.remove();
+    }
+
+    function excluir(btn) {
+      btn.parentElement.parentElement.remove();
+    }
+
+    busca.addEventListener('input', () => {
+      const termo = busca.value.toLowerCase();
+      Array.from(tabela.children).forEach(row => {
+        row.style.display = [...row.children].some(td =>
+          td.textContent.toLowerCase().includes(termo)
+        ) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>

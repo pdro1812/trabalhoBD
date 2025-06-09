@@ -8,6 +8,10 @@ const valoresRoutes = require('./controllers/valoresController');
 const indexRoutes = require('./routes/index');
 const intemAddRoutes = require('./controllers/itemAddController');
 
+const clientesPFController = require('./controllers/clientesPFController');
+const clientesPJController = require('./controllers/clientesPJController');
+
+
 
 const app = express();
 
@@ -22,6 +26,14 @@ app.use('/', indexRoutes);
 app.use('/categorias', categoriaRoutes);
 app.use('/valores', valoresRoutes);
 app.use('/itemadicional', intemAddRoutes);
+app.get('/clientes/pf', clientesPFController.listar);
+app.post('/clientes/pf', clientesPFController.criar);
+app.delete('/clientes/pf/:id', clientesPFController.deletar);
+
+app.post('/clientes/pj', clientesPJController.adicionarEmpresa);
+app.get('/clientes/pj', clientesPJController.listarEmpresas);
+app.delete('/clientes/pj/:id', clientesPJController.excluirEmpresa);
+app.put('/clientes/pj/:id', clientesPJController.atualizarEmpresa);
 
 
 
