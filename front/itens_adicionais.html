@@ -23,12 +23,12 @@
   <div class="container">
     <h1>Gerenciar Itens Adicionais</h1>
 
-    <!-- Formulário para adicionar item -->
+    <!-- Formulário para adicionar/editar item -->
     <form id="itemForm">
       <input type="hidden" id="itemId">
       <div class="form-group">
         <label for="itemInput">Nome do Item</label>
-        <input list="itemNameList" id="itemName" name="itemName" placeholder="Digite o nome do item" required>
+        <input list="itemNameList" id="itemInput" name="itemName" placeholder="Digite o nome do item" required>
         <datalist id="itemNameList">
           <option value="Coca cola">
           <option value="Trident">
@@ -41,19 +41,21 @@
       </div>
 
       <div class="form-group">
-        <label for="itemQuantity">Quantidade</label>
-        <input type="number" id="itemQuantity" placeholder="Digite a quantidade" value="1" required>
-      </div>
-
-      <div class="form-group">
         <label for="itemCategory">Categoria</label>
        <select id="itemCategory" required>
         <option value="">Selecione uma categoria</option>
       </select>
       </div>
       
-      <button type="submit">Adicionar Item</button>
+      <button type="submit" id="submitBtn">Adicionar Item</button>
+      <button type="button" id="cancelBtn" onclick="cancelEdit()" style="display: none;">Cancelar</button>
     </form>
+
+    <!-- Controles de edição/exclusão -->
+    <div class="controls">
+      <button type="button" id="editBtn" onclick="editSelectedItem()" disabled>Editar Selecionado</button>
+      <button type="button" id="deleteBtn" onclick="deleteSelectedItem()" disabled>Excluir Selecionado</button>
+    </div>
 
     <!-- Caixa de busca -->
     <div class="search-box">
@@ -64,17 +66,16 @@
     <table>
       <thead>
         <tr>
+          <th>Selecionar</th>
           <th>ID</th>
           <th>Nome</th>
           <th>Valor</th>
-          <th>Quantidade</th>
           <th>Categoria</th>
-          <th>Ações</th>
         </tr>
       </thead>
       
       <tbody id="itemTableBody">
-        <!-- Os itens serão adicionados dinamicamente aqui -->
+        <!-- Os itens serão carregados dinamicamente aqui -->
       </tbody>
     </table>
   </div>
@@ -83,67 +84,240 @@
     const itemForm = document.getElementById('itemForm');
     const itemTableBody = document.getElementById('itemTableBody');
     const searchInput = document.getElementById('searchInput');
-    let nextId = 1;
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    let isEditing = false;
 
-    // Adicionar item
-    itemForm.addEventListener('submit', (e) => {
-  e.preventDefault();
+    // Carregar itens ao iniciar a página
+    window.addEventListener('load', () => {
+      loadCategories();
+      loadItems();
+    });
 
-  const name = document.getElementById('itemName').value;
-  const value = parseFloat(document.getElementById('itemValue').value);
-  const quantity = parseInt(document.getElementById('itemQuantity').value);
-  const codCategoria = parseInt(document.getElementById('itemCategory').value);
-
-  const item = {
-    nome_item: name,
-    valor: value,
-    quantidade: quantity, // mesmo que não vá pro banco agora, já aproveita
-    cod_categoria: codCategoria
-  };
-
-  fetch('/itemadicional', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(item)
-  }).then(res => {
-    if (res.ok) {
-      alert('Item salvo com sucesso!');
-      itemForm.reset();
-    } else {
-      alert('Erro ao salvar o item.');
+    // Carregar categorias do banco
+    function loadCategories() {
+      fetch('/categorias')
+        .then(res => res.json())
+        .then(data => {
+          const select = document.getElementById('itemCategory');
+          // Limpar opções existentes exceto a primeira
+          select.innerHTML = '<option value="">Selecione uma categoria</option>';
+          
+          data.forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat.id_categoria;
+            option.textContent = cat.nome;
+            select.appendChild(option);
+          });
+        })
+        .catch(err => {
+          console.error('Erro ao carregar categorias:', err);
+          alert('Erro ao carregar categorias');
+        });
     }
-  }).catch(err => {
-    console.error('Erro na requisição:', err);
-    alert('Erro ao salvar item.');
-  });
-});
 
+    // Carregar itens do banco
+    function loadItems() {
+      fetch('/itemadicional')
+        .then(res => res.json())
+        .then(data => {
+          itemTableBody.innerHTML = '';
+          data.forEach(item => {
+            addItemToTable(item);
+          });
+        })
+        .catch(err => {
+          console.error('Erro ao carregar itens:', err);
+          alert('Erro ao carregar itens');
+        });
+    }
+
+    // Adicionar item na tabela
+    function addItemToTable(item) {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="radio" name="selectedItem" value="${item.id_item}" onchange="handleItemSelection()"></td>
+        <td>${item.id_item}</td>
+        <td>${item.nome_item}</td>
+        <td>R$ ${parseFloat(item.valor).toFixed(2).replace('.', ',')}</td>
+        <td>${item.categoria}</td>
+      `;
+      itemTableBody.appendChild(row);
+    }
+
+    // Adicionar/Editar item
+    itemForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('itemInput').value;
+      const value = parseFloat(document.getElementById('itemValue').value);
+      const codCategoria = parseInt(document.getElementById('itemCategory').value);
+      const itemId = document.getElementById('itemId').value;
+
+      const item = {
+        nome_item: name,
+        valor: value,
+        cod_categoria: codCategoria
+      };
+
+      if (isEditing && itemId) {
+        // Editar item existente
+        fetch(`/itemadicional/${itemId}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(item)
+        })
+        .then(res => {
+          if (res.ok) {
+            alert('Item atualizado com sucesso!');
+            resetForm();
+            loadItems();
+          } else {
+            alert('Erro ao atualizar o item.');
+          }
+        })
+        .catch(err => {
+          console.error('Erro na requisição:', err);
+          alert('Erro ao atualizar item.');
+        });
+      } else {
+        // Adicionar novo item
+        fetch('/itemadicional', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(item)
+        })
+        .then(res => {
+          if (res.ok) {
+            alert('Item salvo com sucesso!');
+            resetForm();
+            loadItems();
+          } else {
+            alert('Erro ao salvar o item.');
+          }
+        })
+        .catch(err => {
+          console.error('Erro na requisição:', err);
+          alert('Erro ao salvar item.');
+        });
+      }
+    });
+
+    // Lidar com seleção de item
+    function handleItemSelection() {
+      const editBtn = document.getElementById('editBtn');
+      const deleteBtn = document.getElementById('deleteBtn');
+      const selectedRadio = document.querySelector('input[name="selectedItem"]:checked');
+      
+      if (selectedRadio) {
+        editBtn.disabled = false;
+        deleteBtn.disabled = false;
+      } else {
+        editBtn.disabled = true;
+        deleteBtn.disabled = true;
+      }
+    }
+
+    // Editar item selecionado
+    function editSelectedItem() {
+      const selectedRadio = document.querySelector('input[name="selectedItem"]:checked');
+      if (!selectedRadio) {
+        alert('Selecione um item para editar');
+        return;
+      }
+      
+      const id = selectedRadio.value;
+      editItem(id);
+    }
+
+    // Excluir item selecionado
+    function deleteSelectedItem() {
+      const selectedRadio = document.querySelector('input[name="selectedItem"]:checked');
+      if (!selectedRadio) {
+        alert('Selecione um item para excluir');
+        return;
+      }
+      
+      const id = selectedRadio.value;
+      deleteItem(id);
+    }
 
     // Editar item
-    function editItem(button) {
-      const row = button.parentElement.parentElement;
-      const id = row.children[0].textContent;
-      const name = row.children[1].textContent;
-      const value = row.children[2].textContent.replace('R$ ', '');
-      const quantity = row.children[3].textContent;
-      const category = row.children[4].textContent;
-
-      document.getElementById('itemId').value = id;
-      document.getElementById('itemName').value = name;
-      document.getElementById('itemValue').value = value;
-      document.getElementById('itemQuantity').value = quantity;
-      document.getElementById('itemCategory').value = category;
-
-      // Remover a linha para evitar duplicação
-      row.remove();
+    function editItem(id) {
+      fetch(`/itemadicional`)
+        .then(res => res.json())
+        .then(data => {
+          const item = data.find(i => i.id_item == id);
+          if (item) {
+            document.getElementById('itemId').value = item.id_item;
+            document.getElementById('itemInput').value = item.nome_item;
+            document.getElementById('itemValue').value = item.valor;
+            
+            // Encontrar e selecionar a categoria correta
+            const categorySelect = document.getElementById('itemCategory');
+            for (let option of categorySelect.options) {
+              if (option.textContent === item.categoria) {
+                option.selected = true;
+                break;
+              }
+            }
+            
+            isEditing = true;
+            submitBtn.textContent = 'Atualizar Item';
+            cancelBtn.style.display = 'inline-block';
+          }
+        })
+        .catch(err => {
+          console.error('Erro ao carregar item para edição:', err);
+          alert('Erro ao carregar item para edição');
+        });
     }
 
     // Excluir item
-    function deleteItem(button) {
-      const row = button.parentElement.parentElement;
-      row.remove();
+    function deleteItem(id) {
+      if (confirm('Tem certeza que deseja excluir este item?')) {
+        fetch(`/itemadicional/${id}`, {
+          method: 'DELETE'
+        })
+        .then(res => {
+          if (res.ok) {
+            alert('Item excluído com sucesso!');
+            loadItems();
+          } else {
+            alert('Erro ao excluir o item.');
+          }
+        })
+        .catch(err => {
+          console.error('Erro na requisição:', err);
+          alert('Erro ao excluir item.');
+        });
+      }
+    }
+
+    // Cancelar edição
+    function cancelEdit() {
+      resetForm();
+    }
+
+    // Resetar formulário
+    function resetForm() {
+      itemForm.reset();
+      document.getElementById('itemId').value = '';
+      isEditing = false;
+      submitBtn.textContent = 'Adicionar Item';
+      cancelBtn.style.display = 'none';
+      
+      // Desmarcar seleção e desabilitar botões
+      const selectedRadio = document.querySelector('input[name="selectedItem"]:checked');
+      if (selectedRadio) {
+        selectedRadio.checked = false;
+      }
+      document.getElementById('editBtn').disabled = true;
+      document.getElementById('deleteBtn').disabled = true;
     }
 
     // Filtrar itens na tabela
@@ -157,23 +331,64 @@
         row.style.display = match ? '' : 'none';
       });
     });
-
-      // Carregar categorias do banco ao carregar a página
-      fetch('/categorias')
-        .then(res => res.json())
-        .then(data => {
-          const select = document.getElementById('itemCategory');
-          data.forEach(cat => {
-            const option = document.createElement('option');
-            option.value = cat.id_categoria;
-            option.textContent = cat.nome;
-            select.appendChild(option);
-          });
-        })
-        .catch(err => {
-          console.error('Erro ao carregar categorias:', err);
-        });
-
   </script>
+
+  <style>
+    .controls {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    .controls button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    #editBtn {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    #editBtn:hover:not(:disabled) {
+      background-color: #45a049;
+    }
+
+    #deleteBtn {
+      background-color: #f44336;
+      color: white;
+    }
+
+    #deleteBtn:hover:not(:disabled) {
+      background-color: #da190b;
+    }
+
+    #editBtn:disabled,
+    #deleteBtn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+
+    #cancelBtn {
+      background-color: #6c757d;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-left: 10px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #cancelBtn:hover {
+      background-color: #5a6268;
+    }
+
+    table input[type="radio"] {
+      cursor: pointer;
+    }
+  </style>
 </body>
 </html>
