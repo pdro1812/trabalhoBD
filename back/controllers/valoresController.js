@@ -5,7 +5,7 @@ const { pool } = require('../db');
 // Listar todos os valores
 router.get('/', async (req, res) => {
   try {
-    const resultado = await pool.query('SELECT * FROM valorespadroes ORDER BY data_vigencia DESC');
+    const resultado = await pool.query('SELECT * FROM valores_padroes ORDER BY data_vigencia DESC');
     res.json(resultado.rows);
   } catch (err) {
     console.error('Erro ao listar valores:', err);
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
 
   try {
     const resultado = await pool.query(
-      `INSERT INTO valorespadroes 
+      `INSERT INTO valores_padroes 
         (data_vigencia, data_fim, valor_livre, valor_marmita, valor_kg) 
        VALUES ($1, $2, $3, $4, $5) 
        RETURNING *`,
@@ -43,7 +43,7 @@ router.put('/:data_vigencia', async (req, res) => {
 
   try {
     const resultado = await pool.query(
-      `UPDATE valorespadroes 
+      `UPDATE valores_padroes 
        SET data_fim = $1, valor_livre = $2, valor_marmita = $3, valor_kg = $4 
        WHERE data_vigencia = $5 
        RETURNING *`,
@@ -63,7 +63,7 @@ router.delete('/:data_vigencia', async (req, res) => {
 
   try {
     const resultado = await pool.query(
-      'DELETE FROM valorespadroes WHERE data_vigencia = $1',
+      'DELETE FROM valores_padroes WHERE data_vigencia = $1',
       [data_vigencia]
     );
     if (resultado.rowCount === 0) return res.status(404).json({ erro: 'Valor não encontrado.' });

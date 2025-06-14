@@ -15,6 +15,59 @@
       background: #f5f6fa;
     }
 
+    /* Estilos para os resultados da busca */
+    #resultBox {
+      margin-top: 10px;
+      padding: 10px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .cliente-item {
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .cliente-item:hover {
+      background-color: #f8f9fa;
+    }
+
+    .cliente-item:last-child {
+      border-bottom: none;
+    }
+
+    .cliente-nome {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .cliente-info {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+    }
+
+    .error {
+      color: #dc3545;
+      text-align: center;
+    }
+
+    .no-results {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -66,34 +119,122 @@
         <input type="text" id="searchInput" placeholder="Digite o nome do cliente..." autocomplete="on">
       </div>
       <div id="resultBox"></div>
+      
       <script>
-        // Exemplo de clientes (substitua pelo seu backend futuramente)
-        const clientes = [
-          "Maria Silva",
-          "João Souza",
-          "Ana Paula",
-          "Carlos Alberto",
-          "Fernanda Lima",
-          "Murilo Scapini"
-        ];
-
         const searchInput = document.getElementById('searchInput');
         const resultBox = document.getElementById('resultBox');
+        
+        let timeoutId;
+        let clientesCache = []; // Cache para armazenar todos os clientes
 
-        searchInput.addEventListener('input', function() {
-          const value = this.value.trim().toLowerCase();
-          if (value === "") {
-            resultBox.textContent = "";
+        // Função para carregar todos os clientes uma vez
+        async function carregarClientes() {
+          try {
+            console.log('Carregando clientes...');
+            const response = await fetch('/clientes/pf');
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+              throw new Error(`Erro HTTP: ${response.status}`);
+            }
+            
+            const clientes = await response.json();
+            console.log('Clientes recebidos:', clientes);
+            clientesCache = clientes;
+            return clientes;
+          } catch (error) {
+            console.error('Erro ao carregar clientes:', error);
+            resultBox.innerHTML = '<div class="error">Erro ao conectar com o servidor. Verifique o console.</div>';
+            return [];
+          }
+        }
+
+        // Função para filtrar clientes localmente
+        function filtrarClientes(termo) {
+          if (!termo) return [];
+          
+          const termoLower = termo.toLowerCase();
+          return clientesCache.filter(cliente => 
+            cliente.nome.toLowerCase().includes(termoLower) ||
+            cliente.cpf.includes(termo) ||
+            cliente.telefone.includes(termo)
+          );
+        }
+
+        // Função para renderizar os resultados
+        function renderizarResultados(clientes) {
+          if (clientes.length === 0) {
+            resultBox.innerHTML = '<div class="no-results">Nenhum cliente encontrado.</div>';
             return;
           }
-          // Busca clientes que contenham o texto digitado
-          const encontrados = clientes.filter(nome => nome.toLowerCase().includes(value));
-          if (encontrados.length > 0) {
-            resultBox.innerHTML = encontrados.map(nome => `<span>${nome}</span>`).join('<br>');
-          } else {
-            resultBox.textContent = "Nenhum cliente encontrado.";
+
+          const html = clientes.map(cliente => `
+            <div class="cliente-item" onclick="selecionarCliente(${cliente.id_pessoa})">
+              <div class="cliente-nome">${cliente.nome}</div>
+              <div class="cliente-info">
+                CPF: ${cliente.cpf} | Telefone: ${cliente.telefone || 'Não informado'}
+              </div>
+            </div>
+          `).join('');
+
+          resultBox.innerHTML = html;
+        }
+
+        // Função para selecionar um cliente (você pode personalizar conforme necessário)
+        function selecionarCliente(idCliente) {
+          const cliente = clientesCache.find(c => c.id_pessoa === idCliente);
+          if (cliente) {
+            alert(`Cliente selecionado: ${cliente.nome}`);
+            // Aqui você pode implementar a lógica do que fazer quando um cliente é selecionado
+            // Por exemplo: redirecionar para uma página de pedido, armazenar em localStorage, etc.
+          }
+        }
+
+        // Event listener para o campo de busca
+        searchInput.addEventListener('input', function() {
+          const valor = this.value.trim();
+          
+          // Limpa o timeout anterior
+          clearTimeout(timeoutId);
+          
+          if (valor === '') {
+            resultBox.innerHTML = '';
+            return;
+          }
+
+          // Mostra loading
+          resultBox.innerHTML = '<div class="loading">Buscando...</div>';
+
+          // Debounce: espera 300ms após parar de digitar
+          timeoutId = setTimeout(() => {
+            const clientesFiltrados = filtrarClientes(valor);
+            renderizarResultados(clientesFiltrados);
+          }, 300);
+        });
+
+        // Carrega os clientes quando a página é carregada
+        document.addEventListener('DOMContentLoaded', async function() {
+          try {
+            console.log('Página carregada, iniciando busca de clientes...');
+            await carregarClientes();
+            console.log('Clientes carregados no cache:', clientesCache.length);
+            
+            if (clientesCache.length === 0) {
+              console.warn('Nenhum cliente foi carregado. Verifique:');
+              console.warn('1. Se o servidor está rodando na porta 3000');
+              console.warn('2. Se há clientes cadastrados no banco');
+              console.warn('3. Se a rota /clientes/pf está funcionando');
+            }
+          } catch (error) {
+            console.error('Erro ao inicializar clientes:', error);
+            resultBox.innerHTML = '<div class="error">Erro ao carregar dados dos clientes. Verifique o console para mais detalhes.</div>';
           }
         });
+
+        // Função para recarregar os clientes (útil se houver adições/edições)
+        function recarregarClientes() {
+          return carregarClientes();
+        }
       </script>
     </div>
   </div>

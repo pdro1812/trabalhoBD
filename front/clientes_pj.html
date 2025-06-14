@@ -8,7 +8,7 @@
 </head>
 <body>
   <a href="tela_principal.html" class="back-button">← Voltar</a>
-  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+  <img src="https://placehold.co/150x50/000000/FFFFFF?text=Scapini" alt="Restaurante Scapini" class="logo">
 
   <div class="container">
     <h1>Clientes - Pessoa Jurídica</h1>
@@ -21,6 +21,11 @@
       <div class="form-group">
         <label for="cnpj">CNPJ</label>
         <input type="text" id="cnpj" required>
+      </div>
+      <!-- ADICIONADO: Campo de telefone, que é obrigatório no backend -->
+      <div class="form-group">
+        <label for="telefone">Telefone</label>
+        <input type="text" id="telefone">
       </div>
       <div class="form-group">
         <label for="valorLivre">Valor Livre</label>
@@ -39,7 +44,7 @@
     </form>
 
     <div class="search-box">
-      <input type="text" id="busca" placeholder="Buscar...">
+      <input type="text" id="busca" placeholder="Buscar por nome ou CNPJ...">
     </div>
 
     <table>
@@ -47,6 +52,7 @@
         <tr>
           <th>Nome</th>
           <th>CNPJ</th>
+          <th>Telefone</th>
           <th>Valor Livre</th>
           <th>Valor Marmita</th>
           <th>Valor Kilo</th>
@@ -66,53 +72,56 @@
     
     let empresaEditandoId = null;
 
-    // Carregar empresas ao inicializar a página
     document.addEventListener('DOMContentLoaded', carregarEmpresas);
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const nome = document.getElementById('nome').value;
-      const cnpj = document.getElementById('cnpj').value;
-      const valorLivre = parseFloat(document.getElementById('valorLivre').value);
-      const valorMarmita = parseFloat(document.getElementById('valorMarmita').value);
-      const valorKilo = parseFloat(document.getElementById('valorKilo').value);
+      // Objeto que será enviado para a API
+      const dadosEmpresa = {
+        nome: document.getElementById('nome').value,
+        cnpj: document.getElementById('cnpj').value,
+        // CORRIGIDO: Adicionado o campo telefone
+        telefone: document.getElementById('telefone').value,
+        // CORRIGIDO: Nomes das chaves para bater com o backend (snake_case)
+        valor_livre: parseFloat(document.getElementById('valorLivre').value),
+        valor_marmita: parseFloat(document.getElementById('valorMarmita').value),
+        valor_kg: parseFloat(document.getElementById('valorKilo').value),
+      };
 
       try {
+        let response;
         if (empresaEditandoId) {
           // Atualizar empresa existente
-          const response = await fetch(`/clientes/pj/${empresaEditandoId}`, {
+          response = await fetch(`/clientes/pj/${empresaEditandoId}`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nome, cnpj, valorLivre, valorMarmita, valorKilo })
+            body: JSON.stringify(dadosEmpresa)
           });
-
-          if (response.ok) {
-            alert('Empresa atualizada com sucesso!');
-            cancelarEdicao();
-          } else {
-            alert('Erro ao atualizar empresa');
-          }
+          
         } else {
           // Adicionar nova empresa
-          const response = await fetch('/clientes/pj', {
+          response = await fetch('/clientes/pj', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ nome, cnpj, valorLivre, valorMarmita, valorKilo })
+            body: JSON.stringify(dadosEmpresa)
           });
-
-          if (response.ok) {
-            alert('Empresa adicionada com sucesso!');
-          } else {
-            alert('Erro ao adicionar empresa');
-          }
+        }
+        
+        // MELHORADO: Tratamento de erro com a resposta do backend
+        if (response.ok) {
+            const result = await response.json();
+            alert(result.message || 'Operação realizada com sucesso!');
+            cancelarEdicao(); // Limpa o form e reseta o botão
+        } else {
+            const erro = await response.json();
+            alert(`Erro: ${erro.erro}`);
         }
 
-        form.reset();
         carregarEmpresas();
       } catch (error) {
         console.error('Erro:', error);
-        alert('Erro de conexão');
+        alert('Erro de conexão com o servidor.');
       }
     });
 
@@ -129,24 +138,24 @@
       try {
         tabela.innerHTML = '';
         const response = await fetch('/clientes/pj');
-        
-        if (!response.ok) {
-          throw new Error('Erro ao carregar empresas');
-        }
+        if (!response.ok) throw new Error('Erro ao carregar empresas');
         
         const empresas = await response.json();
 
         empresas.forEach(emp => {
           const row = document.createElement('tr');
+          row.dataset.id = emp.id_pessoa; // Adiciona o ID ao elemento da linha
           row.innerHTML = `
             <td>${emp.nome}</td>
             <td>${emp.cnpj}</td>
+            <!-- CORRIGIDO: Exibe o telefone -->
+            <td>${emp.telefone || 'N/A'}</td>
             <td>R$ ${parseFloat(emp.valor_livre).toFixed(2)}</td>
             <td>R$ ${parseFloat(emp.valor_marmita).toFixed(2)}</td>
             <td>R$ ${parseFloat(emp.valor_kg).toFixed(2)}</td>
             <td>
-              <button onclick="editarEmpresa(${emp.id})">Editar</button>
-              <button onclick="excluirEmpresa(${emp.id}, '${emp.nome}')">Excluir</button>
+              <button onclick="editarEmpresa(${emp.id_pessoa})">Editar</button>
+              <button onclick="excluirEmpresa(${emp.id_pessoa}, '${emp.nome}')">Excluir</button>
             </td>
           `;
           tabela.appendChild(row);
@@ -158,32 +167,24 @@
     }
 
     async function editarEmpresa(id) {
-      try {
-        // Buscar dados da empresa específica
-        const response = await fetch('/clientes/pj');
-        const empresas = await response.json();
-        const empresa = empresas.find(emp => emp.id === id);
+        const row = document.querySelector(`tr[data-id='${id}']`);
+        if (!row) return;
 
-        if (empresa) {
-          // Preencher formulário com os dados da empresa
-          document.getElementById('nome').value = empresa.nome;
-          document.getElementById('cnpj').value = empresa.cnpj;
-          document.getElementById('valorLivre').value = empresa.valor_livre;
-          document.getElementById('valorMarmita').value = empresa.valor_marmita;
-          document.getElementById('valorKilo').value = empresa.valor_kg;
+        // Preencher formulário com os dados da empresa
+        // CORRIGIDO: Busca os dados da linha da tabela em vez de fazer nova requisição
+        document.getElementById('nome').value = row.cells[0].textContent;
+        document.getElementById('cnpj').value = row.cells[1].textContent;
+        document.getElementById('telefone').value = row.cells[2].textContent === 'N/A' ? '' : row.cells[2].textContent;
+        document.getElementById('valorLivre').value = row.cells[3].textContent.replace('R$ ', '');
+        document.getElementById('valorMarmita').value = row.cells[4].textContent.replace('R$ ', '');
+        document.getElementById('valorKilo').value = row.cells[5].textContent.replace('R$ ', '');
 
-          // Configurar modo de edição
-          empresaEditandoId = id;
-          btnSubmit.textContent = 'Atualizar Empresa';
-          btnCancelar.style.display = 'inline-block';
+        // Configurar modo de edição
+        empresaEditandoId = id;
+        btnSubmit.textContent = 'Atualizar Empresa';
+        btnCancelar.style.display = 'inline-block';
 
-          // Scroll para o formulário
-          form.scrollIntoView({ behavior: 'smooth' });
-        }
-      } catch (error) {
-        console.error('Erro ao buscar empresa:', error);
-        alert('Erro ao carregar dados da empresa');
-      }
+        form.scrollIntoView({ behavior: 'smooth' });
     }
 
     async function excluirEmpresa(id, nome) {
@@ -196,13 +197,11 @@
           if (response.ok) {
             alert('Empresa excluída com sucesso!');
             carregarEmpresas();
-            
-            // Se estava editando esta empresa, cancelar edição
-            if (empresaEditandoId === id) {
-              cancelarEdicao();
-            }
+            if (empresaEditandoId === id) cancelarEdicao();
           } else {
-            alert('Erro ao excluir empresa');
+            // MELHORADO: Usa a mensagem de erro específica do backend
+            const erro = await response.json();
+            alert(`Erro ao excluir: ${erro.erro}`);
           }
         } catch (error) {
           console.error('Erro ao excluir empresa:', error);
@@ -211,16 +210,12 @@
       }
     }
 
-    // Função de busca
     busca.addEventListener('input', () => {
       const termo = busca.value.toLowerCase();
       Array.from(tabela.children).forEach(row => {
-        const textoRow = Array.from(row.children)
-          .slice(0, -1) // Excluir a coluna de ações da busca
-          .map(td => td.textContent.toLowerCase())
-          .join(' ');
-        
-        row.style.display = textoRow.includes(termo) ? '' : 'none';
+        const nome = row.cells[0].textContent.toLowerCase();
+        const cnpj = row.cells[1].textContent.toLowerCase();
+        row.style.display = (nome.includes(termo) || cnpj.includes(termo)) ? '' : 'none';
       });
     });
   </script>

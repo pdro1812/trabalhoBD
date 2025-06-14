@@ -8,23 +8,12 @@
   <link href="css/categoria.css" rel="stylesheet">
 </head>
 <body>
+  <a href="tela_principal.html" class="back-button">← Voltar</a>
+  <img src="https://placehold.co/150x50/000000/FFFFFF?text=Scapini" alt="Restaurante Scapini" class="logo">
 
-  <!-- Botão de voltar -->
-  <a href="tela_principal.html" class="back-button">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
-    </svg>
-    Voltar
-  </a>
-
-  <!-- Logo -->
-  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
-
-  <!-- Container -->
   <div class="container">
     <h1>Gerenciar Categorias</h1>
 
-    <!-- Tabela de categorias -->
     <table>
       <thead>
         <tr>
@@ -32,138 +21,149 @@
           <th class="checkbox-column">Selecionar</th>
         </tr>
       </thead>
-      <tbody id="categoryTableBody">
-      </tbody>
+      <tbody id="categoryTableBody"></tbody>
     </table>
 
-    <!-- Botões -->
     <div class="button-group">
-      <button onclick="toggleCategoryForm()">Adicionar Categoria</button>
-      <button onclick="editCategory()">Editar Categoria</button>
-      <button onclick="removeSelectedCategories()">Remover Selecionadas</button>
+      <button id="btnAdicionar" onclick="showCategoryForm()">Adicionar Categoria</button>
+      <button id="btnEditar" onclick="editCategory()">Editar Selecionada</button>
+      <button id="btnRemover" onclick="removeSelectedCategories()">Remover Selecionadas</button>
     </div>
 
-    <!-- Formulário de categoria -->
+    <!-- O formulário será usado para adicionar e editar -->
     <form id="categoryForm" style="display: none;">
+      <h3 id="formTitle">Adicionar Categoria</h3>
       <div class="form-group">
         <label for="categoryName">Nome da Categoria</label>
-        <input type="text" id="categoryName" placeholder="Digite o nome da categoria" required>
+        <input type="text" id="categoryName" placeholder="Ex: Bebidas, Sobremesas" required>
       </div>
-      <button type="submit">Salvar Categoria</button>
+      <button type="submit">Salvar</button>
     </form>
   </div>
 
   <script>
-  const categoryForm = document.getElementById('categoryForm');
-  const categoryTableBody = document.getElementById('categoryTableBody');
-  let editingRow = null;
-  let editingId = null;
+    const categoryForm = document.getElementById('categoryForm');
+    const categoryTableBody = document.getElementById('categoryTableBody');
+    const formTitle = document.getElementById('formTitle');
+    const categoryNameInput = document.getElementById('categoryName');
+    
+    let editingCategoryId = null;
 
-  async function carregarCategorias() {
-    try {
-      const res = await fetch('/categorias');
-      const categorias = await res.json();
+    // Carrega as categorias do servidor quando a página é aberta
+    document.addEventListener('DOMContentLoaded', carregarCategorias);
 
-      categoryTableBody.innerHTML = '';
+    async function carregarCategorias() {
+        try {
+            const response = await fetch('/categorias');
+            if (!response.ok) throw new Error('Erro ao buscar dados.');
+            const categorias = await response.json();
 
-      categorias.forEach(categoria => {
-        const row = document.createElement('tr');
-        row.setAttribute('id_categoria', categoria.id_categoria);
-        row.innerHTML = `
-          <td>${categoria.nome}</td>
-          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
-        `;
-        categoryTableBody.appendChild(row);
-      });
-    } catch (err) {
-      console.error('Erro ao carregar categorias:', err);
+            categoryTableBody.innerHTML = ''; // Limpa a tabela antes de preencher
+            categorias.forEach(categoria => {
+                const row = document.createElement('tr');
+                // Usa data-id para armazenar o ID de forma segura
+                row.dataset.id = categoria.id_categoria;
+                row.innerHTML = `
+                    <td>${categoria.nome}</td>
+                    <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
+                `;
+                categoryTableBody.appendChild(row);
+            });
+        } catch (err) {
+            console.error('Erro ao carregar categorias:', err);
+            alert('Não foi possível carregar as categorias.');
+        }
     }
-  }
 
-  function toggleCategoryForm() {
-    categoryForm.style.display = categoryForm.style.display === 'none' ? 'block' : 'none';
-    editingId = null;
-    editingRow = null;
-    categoryForm.reset();
-  }
-
-  categoryForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('categoryName').value;
-
-    if (!name) return alert('Informe o nome da categoria.');
-
-    try {
-      if (editingId) {
-        const res = await fetch(`/categorias/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome: name })
-        });
-
-        if (!res.ok) throw new Error('Erro ao editar no banco.');
-
-        const updated = await res.json();
-        editingRow.cells[0].textContent = updated.nome;
-      } else {
-        const res = await fetch('/categorias', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ nome: name })
-        });
-
-        if (!res.ok) throw new Error('Erro ao salvar no banco.');
-
-        const novaCategoria = await res.json();
-        const row = document.createElement('tr');
-        row.setAttribute('id_categoria', novaCategoria.id);
-        row.innerHTML = `
-          <td>${novaCategoria.nome}</td>
-          <td class="checkbox-column"><input type="checkbox" class="remove-checkbox"></td>
-        `;
-        categoryTableBody.appendChild(row);
-      }
-
-      categoryForm.reset();
-      categoryForm.style.display = 'none';
-      editingRow = null;
-      editingId = null;
-    } catch (err) {
-      alert('Erro ao salvar categoria.');
-      console.error(err);
+    // Mostra o formulário para adicionar uma nova categoria
+    function showCategoryForm() {
+        editingCategoryId = null;
+        formTitle.textContent = 'Adicionar Categoria';
+        categoryForm.reset();
+        categoryForm.style.display = 'block';
     }
-  });
 
-  function editCategory() {
-    const checkbox = document.querySelector('.remove-checkbox:checked');
-    if (!checkbox) return alert('Selecione uma categoria para editar.');
+    // Prepara o formulário para edição
+    function editCategory() {
+        const checkedBoxes = document.querySelectorAll('.remove-checkbox:checked');
 
-    editingRow = checkbox.closest('tr');
-    editingId = editingRow.getAttribute('id_categoria');
-    document.getElementById('categoryName').value = editingRow.cells[0].textContent;
-    categoryForm.style.display = 'block';
-  }
+        if (checkedBoxes.length === 0) {
+            return alert('Selecione uma categoria para editar.');
+        }
+        if (checkedBoxes.length > 1) {
+            return alert('Selecione apenas UMA categoria para editar.');
+        }
 
-  async function removeSelectedCategories() {
-    const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
+        const row = checkedBoxes[0].closest('tr');
+        editingCategoryId = row.dataset.id;
+        const currentName = row.cells[0].textContent;
 
-    for (const checkbox of checkboxes) {
-      const row = checkbox.closest('tr');
-      const id = row.getAttribute('id_categoria');
-
-      try {
-        const res = await fetch(`/categorias/${id}`, { method: 'DELETE' });
-        if (res.ok) row.remove();
-        else console.error(`Erro ao remover categoria ${id}`);
-      } catch (err) {
-        console.error(`Erro ao remover categoria ${id}:`, err);
-      }
+        formTitle.textContent = 'Editar Categoria';
+        categoryNameInput.value = currentName;
+        categoryForm.style.display = 'block';
     }
-  }
 
-  // Carrega ao abrir
-  window.onload = carregarCategorias;
-</script>
+    // Evento de submit do formulário (cria ou atualiza)
+    categoryForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nome = categoryNameInput.value.trim();
+        if (!nome) return alert('O nome da categoria não pode estar em branco.');
 
+        const url = editingCategoryId ? `/categorias/${editingCategoryId}` : '/categorias';
+        const method = editingCategoryId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome })
+            });
+
+            if (response.ok) {
+                alert(`Categoria ${editingCategoryId ? 'atualizada' : 'adicionada'} com sucesso!`);
+                categoryForm.style.display = 'none';
+                categoryForm.reset();
+                editingCategoryId = null;
+                carregarCategorias(); // Recarrega a lista
+            } else {
+                const erro = await response.json();
+                alert(`Erro: ${erro.erro}`);
+            }
+        } catch (err) {
+            console.error('Erro ao salvar categoria:', err);
+            alert('Erro de conexão ao salvar a categoria.');
+        }
+    });
+
+    // Remove as categorias selecionadas
+    async function removeSelectedCategories() {
+        const checkedBoxes = document.querySelectorAll('.remove-checkbox:checked');
+        if (checkedBoxes.length === 0) {
+            return alert('Selecione pelo menos uma categoria para remover.');
+        }
+
+        if (!confirm(`Tem certeza que deseja remover as ${checkedBoxes.length} categorias selecionadas?`)) {
+            return;
+        }
+
+        for (const checkbox of checkedBoxes) {
+            const row = checkbox.closest('tr');
+            const id = row.dataset.id;
+
+            try {
+                const response = await fetch(`/categorias/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const erro = await response.json();
+                    alert(`Não foi possível remover a categoria "${row.cells[0].textContent}": ${erro.erro}`);
+                }
+            } catch (err) {
+                console.error(`Erro na requisição para remover categoria ${id}:`, err);
+                alert('Erro de conexão ao tentar remover uma categoria.');
+            }
+        }
+        
+        carregarCategorias(); // Recarrega a lista para mostrar o resultado final
+    }
+  </script>
 </body>
 </html>

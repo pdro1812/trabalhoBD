@@ -26,9 +26,6 @@
         <label for="cliente">Cliente:</label>
         <input list="clientes" id="cliente" name="cliente" placeholder="Digite o nome do cliente" required>
         <datalist id="clientes">
-          <option value="Carlos Silva">
-          <option value="Ana Lima">
-          <option value="Nome1">
         </datalist>
       </div>
       <div class="form-group">
@@ -43,23 +40,25 @@
         <label for="formaPagamento">Forma de Pagamento</label>
         <select id="formaPagamento" required>
           <option value="">Selecione</option>
-          <option value="Dinheiro">Dinheiro</option>
-          <option value="Cartão de Crédito">Cartão de Crédito</option>
-          <option value="Cartão de Débito">Cartão de Débito</option>
-          <option value="Pix">Pix</option>
+          <option value="1">Dinheiro</option>
+          <option value="2">Cartão de Crédito</option>
+          <option value="3">Cartão de Débito</option>
+          <option value="4">Pix</option>
         </select>
       </div>
-      <button type="submit">Salvar Pagamento</button>
+      <button type="submit" id="submitBtn">Salvar Pagamento</button>
+      <button type="button" id="cancelBtn" style="display:none;">Cancelar Edição</button>
     </form>
 
     <table>
       <thead>
         <tr>
-          <th>ID Pagamento</th>
+          <th>ID</th>
           <th>Cliente</th>
           <th>Valor Pago</th>
           <th>Data</th>
           <th>Forma</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="pagamentosTableBody">
@@ -70,11 +69,124 @@
   <script>
     const pagamentosForm = document.getElementById('pagamentosForm');
     const pagamentosTableBody = document.getElementById('pagamentosTableBody');
-    let pagamentoId = 1; 
+    const submitBtn = document.getElementById('submitBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    
+    let editandoPagamento = null;
+    let clientes = [];
+    let pagamentos = [];
 
+    // Mapeamento das formas de pagamento
+    const formasPagamento = {
+      1: 'Dinheiro',
+      2: 'Cartão de Crédito',
+      3: 'Cartão de Débito',
+      4: 'Pix'
+    };
+
+    // Definir data atual como padrão
     document.getElementById('dataPagamento').valueAsDate = new Date();
 
-    pagamentosForm.addEventListener('submit', (e) => {
+    // Carregar dados iniciais
+    async function carregarDados() {
+      await carregarClientes();
+      await carregarPagamentos();
+    }
+
+    // Carregar clientes para o datalist
+    async function carregarClientes() {
+      try {
+        // Buscar todos os clientes da tabela pessoa
+        const response = await fetch('/pagamentos/clientes');
+        const todosClientes = await response.json();
+        
+        clientes = todosClientes.map(c => ({ 
+          id: c.id_pessoa, 
+          nome: c.nome 
+        }));
+        
+        const datalist = document.getElementById('clientes');
+        datalist.innerHTML = '';
+        
+        clientes.forEach(cliente => {
+          const option = document.createElement('option');
+          option.value = cliente.nome;
+          option.setAttribute('data-id', cliente.id);
+          datalist.appendChild(option);
+        });
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error);
+        // Fallback: tentar carregar PF se a rota específica não existir
+        try {
+          const responsePF = await fetch('/clientes/pf');
+          const clientesPF = await responsePF.json();
+          
+          clientes = clientesPF.map(c => ({ 
+            id: c.id_pessoa, 
+            nome: c.nome 
+          }));
+          
+          const datalist = document.getElementById('clientes');
+          datalist.innerHTML = '';
+          
+          clientes.forEach(cliente => {
+            const option = document.createElement('option');
+            option.value = cliente.nome;
+            option.setAttribute('data-id', cliente.id);
+            datalist.appendChild(option);
+          });
+        } catch (fallbackError) {
+          console.error('Erro no fallback:', fallbackError);
+        }
+      }
+    }
+
+    // Carregar pagamentos
+    async function carregarPagamentos() {
+      try {
+        const response = await fetch('/pagamentos');
+        pagamentos = await response.json();
+        renderizarPagamentos();
+      } catch (error) {
+        console.error('Erro ao carregar pagamentos:', error);
+      }
+    }
+
+    // Renderizar tabela de pagamentos
+    function renderizarPagamentos() {
+      pagamentosTableBody.innerHTML = '';
+      
+      pagamentos.forEach(pagamento => {
+        const dataFormatada = new Date(pagamento.data).toLocaleDateString('pt-BR');
+        const valorFormatado = parseFloat(pagamento.valor_pago).toLocaleString('pt-BR', { 
+          style: 'currency', 
+          currency: 'BRL' 
+        });
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${pagamento.id_pagamento}</td>
+          <td>${pagamento.nome_pessoa}</td>
+          <td>${valorFormatado}</td>
+          <td>${dataFormatada}</td>
+          <td>${formasPagamento[pagamento.forma] || pagamento.forma}</td>
+          <td>
+            <button onclick="editarPagamento(${pagamento.id_pagamento})" class="btn-edit">Editar</button>
+            <button onclick="excluirPagamento(${pagamento.id_pagamento})" class="btn-delete">Excluir</button>
+          </td>
+        `;
+        pagamentosTableBody.appendChild(row);
+      });
+    }
+
+    // Obter ID do cliente pelo nome
+    function obterIdCliente(nomeCliente) {
+      const cliente = clientes.find(c => c.nome === nomeCliente);
+      return cliente ? cliente.id : null;
+    }
+
+    // Submit do formulário
+    pagamentosForm.addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const cliente = document.getElementById('cliente').value;
@@ -82,27 +194,105 @@
       const dataPagamento = document.getElementById('dataPagamento').value;
       const formaPagamento = document.getElementById('formaPagamento').value;
 
-      const dataFormatada = new Date(dataPagamento).toLocaleDateString('pt-BR');
-      
-      const valorFormatado = parseFloat(valorPago).toLocaleString('pt-BR', { 
-        style: 'currency', 
-        currency: 'BRL' 
-      });
+      const codPessoa = obterIdCliente(cliente);
+      if (!codPessoa) {
+        alert('Cliente não encontrado!');
+        return;
+      }
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${pagamentoId++}</td>
-        <td>${cliente}</td>
-        <td>${valorFormatado}</td>
-        <td>${dataFormatada}</td>
-        <td>${formaPagamento}</td>
-      `;
-      pagamentosTableBody.appendChild(row);
+      const dadosPagamento = {
+        cod_pessoa: codPessoa,
+        valor_pago: parseFloat(valorPago),
+        data: dataPagamento,
+        forma: parseInt(formaPagamento)
+      };
 
-      pagamentosForm.reset();
-      
-      document.getElementById('dataPagamento').valueAsDate = new Date();
+      try {
+        let response;
+        if (editandoPagamento) {
+          // Atualizar pagamento existente
+          response = await fetch(`/pagamentos/${editandoPagamento}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadosPagamento)
+          });
+        } else {
+          // Criar novo pagamento
+          response = await fetch('/pagamentos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dadosPagamento)
+          });
+        }
+
+        if (response.ok) {
+          await carregarPagamentos();
+          resetarFormulario();
+          alert(editandoPagamento ? 'Pagamento atualizado com sucesso!' : 'Pagamento salvo com sucesso!');
+        } else {
+          alert('Erro ao salvar pagamento!');
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao salvar pagamento!');
+      }
     });
+
+    // Editar pagamento
+    function editarPagamento(id) {
+      const pagamento = pagamentos.find(p => p.id_pagamento === id);
+      if (!pagamento) return;
+
+      editandoPagamento = id;
+      
+      document.getElementById('cliente').value = pagamento.nome_pessoa;
+      document.getElementById('valorPago').value = pagamento.valor_pago;
+      document.getElementById('dataPagamento').value = pagamento.data.split('T')[0];
+      document.getElementById('formaPagamento').value = pagamento.forma;
+      
+      submitBtn.textContent = 'Atualizar Pagamento';
+      cancelBtn.style.display = 'inline-block';
+    }
+
+    // Excluir pagamento
+    async function excluirPagamento(id) {
+      if (!confirm('Tem certeza que deseja excluir este pagamento?')) return;
+
+      try {
+        const response = await fetch(`/pagamentos/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          await carregarPagamentos();
+          alert('Pagamento excluído com sucesso!');
+        } else {
+          alert('Erro ao excluir pagamento!');
+        }
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao excluir pagamento!');
+      }
+    }
+
+    // Cancelar edição
+    cancelBtn.addEventListener('click', resetarFormulario);
+
+    // Resetar formulário
+    function resetarFormulario() {
+      editandoPagamento = null;
+      pagamentosForm.reset();
+      document.getElementById('dataPagamento').valueAsDate = new Date();
+      submitBtn.textContent = 'Salvar Pagamento';
+      cancelBtn.style.display = 'none';
+    }
+
+    // Carregar dados quando a página carregar
+    window.addEventListener('load', carregarDados);
   </script>
 </body>
 </html>

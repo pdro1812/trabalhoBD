@@ -8,7 +8,7 @@
 </head>
 <body>
   <a href="tela_principal.html" class="back-button">← Voltar</a>
-  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+  <img src="https://placehold.co/150x50/000000/FFFFFF?text=Scapini" alt="Restaurante Scapini" class="logo">
 
   <div class="container">
     <h1>Clientes - Pessoa Física</h1>
@@ -29,15 +29,15 @@
       <div class="form-group">
         <label for="empresa">Empresa</label>
         <select id="empresa" required>
-          <option value="Empresa1">Empresa1</option>
-          <option value="Empresa2">Empresa2</option>
+          <option value="">Carregando...</option>
         </select>
       </div>
-      <button type="submit">Adicionar Cliente</button>
+      <button type="submit" id="btnSubmit">Adicionar Cliente</button>
+      <button type="button" id="btnCancelar" style="display: none;">Cancelar Edição</button>
     </form>
 
     <div class="search-box">
-      <input type="text" id="busca" placeholder="Buscar...">
+      <input type="text" id="busca" placeholder="Buscar por nome, CPF ou empresa...">
     </div>
 
     <table>
@@ -58,59 +58,171 @@
     const form = document.getElementById('formPF');
     const tabela = document.getElementById('tabelaPF');
     const busca = document.getElementById('busca');
+    const empresaSelect = document.getElementById('empresa');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnCancelar = document.getElementById('btnCancelar');
+    
+    let clienteEditandoId = null;
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nome = document.getElementById('nome').value;
-      const cpf = document.getElementById('cpf').value;
-      const telefone = document.getElementById('telefone').value;
-      const empresa = document.getElementById('empresa').value;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${nome}</td>
-        <td>${cpf}</td>
-        <td>${telefone}</td>
-        <td>${empresa}</td>
-        <td>
-          <button onclick="editar(this)">Editar</button>
-          <button onclick="excluir(this)">Excluir</button>
-        </td>
-      `;
-      tabela.appendChild(row);
-
-      /*
-      await fetch('/clientes/pf', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ nome, cpf, telefone, empresa })
-      });
-      */
-
-      form.reset();
+    // Carregar dados iniciais
+    document.addEventListener('DOMContentLoaded', () => {
+        carregarEmpresas();
+        carregarClientesPF();
     });
 
-    function editar(btn) {
-      const row = btn.parentElement.parentElement;
-      const cells = row.children;
-      document.getElementById('nome').value = cells[0].textContent;
-      document.getElementById('cpf').value = cells[1].textContent;
-      document.getElementById('telefone').value = cells[2].textContent;
-      document.getElementById('empresa').value = cells[3].textContent;
-      row.remove();
+    // Função para carregar as empresas no dropdown
+    async function carregarEmpresas() {
+        try {
+            const response = await fetch('/clientes/pj');
+            if (!response.ok) throw new Error('Erro ao buscar empresas');
+            const empresas = await response.json();
+            
+            empresaSelect.innerHTML = '<option value="">Selecione uma empresa</option>'; // Limpa opções
+            empresas.forEach(emp => {
+                const option = document.createElement('option');
+                option.value = emp.id_pessoa;
+                option.textContent = emp.nome;
+                empresaSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error(error);
+            empresaSelect.innerHTML = '<option value="">Erro ao carregar</option>';
+        }
     }
 
-    function excluir(btn) {
-      btn.parentElement.parentElement.remove();
+    // Função para carregar os clientes PF na tabela
+    async function carregarClientesPF() {
+        try {
+            tabela.innerHTML = ''; // Limpa a tabela
+            const response = await fetch('/clientes/pf');
+            if (!response.ok) throw new Error('Erro ao buscar clientes');
+            const clientes = await response.json();
+
+            clientes.forEach(cli => {
+                const row = document.createElement('tr');
+                row.dataset.id = cli.id_pessoa;
+                row.innerHTML = `
+                    <td>${cli.nome}</td>
+                    <td>${cli.cpf}</td>
+                    <td>${cli.telefone}</td>
+                    <td>${cli.nome_empresa || 'N/A'}</td>
+                    <td>
+                        <button onclick="editarCliente(${cli.id_pessoa})">Editar</button>
+                        <button onclick="excluirCliente(${cli.id_pessoa}, '${cli.nome}')">Excluir</button>
+                    </td>
+                `;
+                tabela.appendChild(row);
+            });
+        } catch (error) {
+            console.error(error);
+            alert('Não foi possível carregar a lista de clientes.');
+        }
     }
 
+    // Lida com a submissão do formulário (Criar ou Atualizar)
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const dadosCliente = {
+            nome: document.getElementById('nome').value,
+            cpf: document.getElementById('cpf').value,
+            telefone: document.getElementById('telefone').value,
+            id_empresa: document.getElementById('empresa').value,
+        };
+
+        try {
+            let response;
+            if (clienteEditandoId) {
+                // Atualizar
+                response = await fetch(`/clientes/pf/${clienteEditandoId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dadosCliente)
+                });
+            } else {
+                // Criar
+                response = await fetch('/clientes/pf', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(dadosCliente)
+                });
+            }
+
+            if (response.ok) {
+                const result = await response.json();
+                alert(result.mensagem || 'Operação realizada com sucesso!');
+                cancelarEdicao();
+            } else {
+                const erro = await response.json();
+                alert(`Erro: ${erro.erro}`);
+            }
+
+            carregarClientesPF(); // Recarrega a lista
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro de conexão com o servidor.');
+        }
+    });
+
+    btnCancelar.addEventListener('click', cancelarEdicao);
+
+    function cancelarEdicao() {
+        clienteEditandoId = null;
+        btnSubmit.textContent = 'Adicionar Cliente';
+        btnCancelar.style.display = 'none';
+        form.reset();
+    }
+
+    function editarCliente(id) {
+        const row = document.querySelector(`tr[data-id='${id}']`);
+        if (!row) return;
+
+        document.getElementById('nome').value = row.cells[0].textContent;
+        document.getElementById('cpf').value = row.cells[1].textContent;
+        document.getElementById('telefone').value = row.cells[2].textContent;
+        
+        // Encontra o value da empresa pelo nome
+        const nomeEmpresa = row.cells[3].textContent;
+        const option = Array.from(empresaSelect.options).find(opt => opt.text === nomeEmpresa);
+        if(option) empresaSelect.value = option.value;
+
+        clienteEditandoId = id;
+        btnSubmit.textContent = 'Atualizar Cliente';
+        btnCancelar.style.display = 'inline-block';
+        form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function excluirCliente(id, nome) {
+        if (confirm(`Tem certeza que deseja excluir o cliente "${nome}"?`)) {
+            try {
+                const response = await fetch(`/clientes/pf/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Cliente excluído com sucesso!');
+                    if (clienteEditandoId === id) cancelarEdicao();
+                    carregarClientesPF();
+                } else {
+                    const erro = await response.json();
+                    alert(`Erro ao excluir: ${erro.erro}`);
+                }
+            } catch (error) {
+                console.error('Erro ao excluir cliente:', error);
+                alert('Erro de conexão ao excluir cliente.');
+            }
+        }
+    }
+
+    // Filtro de busca
     busca.addEventListener('input', () => {
-      const termo = busca.value.toLowerCase();
-      Array.from(tabela.children).forEach(row => {
-        row.style.display = [...row.children].some(td =>
-          td.textContent.toLowerCase().includes(termo)
-        ) ? '' : 'none';
-      });
+        const termo = busca.value.toLowerCase();
+        Array.from(tabela.children).forEach(row => {
+            const nome = row.cells[0].textContent.toLowerCase();
+            const cpf = row.cells[1].textContent.toLowerCase();
+            const empresa = row.cells[3].textContent.toLowerCase();
+            row.style.display = (nome.includes(termo) || cpf.includes(termo) || empresa.includes(termo)) ? '' : 'none';
+        });
     });
   </script>
 </body>
