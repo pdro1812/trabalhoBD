@@ -6,8 +6,6 @@
   <title>Valores Padrões</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
   <link href="css/valores.css" rel="stylesheet">
-
- 
 </head>
 <body>
 
@@ -26,8 +24,9 @@
   <div class="container">
     <h1>Valores Padrões</h1>
 
-    <!-- Formulário para adicionar valores padrões -->
+    <!-- Formulário para adicionar/editar valores padrões -->
     <form id="valoresForm">
+      <input type="hidden" id="editandoDataVigencia" value="">
       <div class="form-group">
         <label for="dataVigencia">Data de Vigência</label>
         <input type="date" id="dataVigencia" required>
@@ -38,17 +37,18 @@
       </div>
       <div class="form-group">
         <label for="valorLivre">Valor Livre</label>
-        <input type="number" id="valorLivre" placeholder="Digite o valor livre" required>
+        <input type="number" id="valorLivre" step="0.01" placeholder="Digite o valor livre" required>
       </div>
       <div class="form-group">
         <label for="valorMarmita">Valor Marmita</label>
-        <input type="number" id="valorMarmita" placeholder="Digite o valor da marmita" required>
+        <input type="number" id="valorMarmita" step="0.01" placeholder="Digite o valor da marmita" required>
       </div>
       <div class="form-group">
         <label for="valorKg">Valor por Kg</label>
-        <input type="number" id="valorKg" placeholder="Digite o valor por Kg" required>
+        <input type="number" id="valorKg" step="0.01" placeholder="Digite o valor por Kg" required>
       </div>
-      <button type="submit">Salvar Valores</button>
+      <button type="submit" id="submitBtn">Salvar Valores</button>
+      <button type="button" id="cancelBtn" style="display: none; margin-left: 10px; background-color: #6c757d;">Cancelar</button>
     </form>
 
     <!-- Tabela de valores padrões -->
@@ -60,6 +60,7 @@
           <th>Valor Livre</th>
           <th>Valor Marmita</th>
           <th>Valor por Kg</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="valoresTableBody">
@@ -71,29 +72,126 @@
   <script>
   const valoresForm = document.getElementById('valoresForm');
   const valoresTableBody = document.getElementById('valoresTableBody');
+  const submitBtn = document.getElementById('submitBtn');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const editandoDataVigencia = document.getElementById('editandoDataVigencia');
+
+  let modoEdicao = false;
 
   // Carregar dados existentes
   async function carregarValores() {
-    const resposta = await fetch('/valores');
-    const valores = await resposta.json();
+    try {
+      const resposta = await fetch('/valores');
+      const valores = await resposta.json();
 
-    valoresTableBody.innerHTML = '';
+      valoresTableBody.innerHTML = '';
 
-    valores.forEach(valor => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${valor.data_vigencia}</td>
-        <td>${valor.data_fim}</td>
-        <td>${valor.valor_livre}</td>
-        <td>${valor.valor_marmita}</td>
-        <td>${valor.valor_kg}</td>
-      `;
-      valoresTableBody.appendChild(row);
-    });
+      valores.forEach(valor => {
+        const row = document.createElement('tr');
+        
+        // Formatando as datas para exibição (assumindo formato ISO)
+        const dataVigenciaFormatada = new Date(valor.data_vigencia).toLocaleDateString('pt-BR');
+        const dataFimFormatada = new Date(valor.data_fim).toLocaleDateString('pt-BR');
+        
+        row.innerHTML = `
+          <td>${dataVigenciaFormatada}</td>
+          <td>${dataFimFormatada}</td>
+          <td>R$ ${parseFloat(valor.valor_livre).toFixed(2)}</td>
+          <td>R$ ${parseFloat(valor.valor_marmita).toFixed(2)}</td>
+          <td>R$ ${parseFloat(valor.valor_kg).toFixed(2)}</td>
+          <td>
+            <button onclick="excluirValor('${valor.data_vigencia}')" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Excluir</button>
+          </td>
+        `;
+        valoresTableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error('Erro ao carregar valores:', error);
+      alert('Erro ao carregar valores padrões');
+    }
   }
 
+  // Função para editar valor
+  async function editarValor(dataVigencia) {
+    try {
+      const resposta = await fetch('/valores');
+      const valores = await resposta.json();
+      
+      const valor = valores.find(v => v.data_vigencia === dataVigencia);
+      
+      if (valor) {
+        // Preencher o formulário com os dados
+        document.getElementById('dataVigencia').value = valor.data_vigencia;
+        document.getElementById('dataFim').value = valor.data_fim;
+        document.getElementById('valorLivre').value = valor.valor_livre;
+        document.getElementById('valorMarmita').value = valor.valor_marmita;
+        document.getElementById('valorKg').value = valor.valor_kg;
+        
+        // Desabilitar o campo data de vigência durante edição
+        document.getElementById('dataVigencia').disabled = true;
+        
+        // Armazenar a data original para a atualização
+        editandoDataVigencia.value = dataVigencia;
+        
+        // Alterar interface para modo edição
+        modoEdicao = true;
+        submitBtn.textContent = 'Atualizar Valores';
+        cancelBtn.style.display = 'inline-block';
+        
+        // Scroll para o formulário
+        valoresForm.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados para edição:', error);
+      alert('Erro ao carregar dados para edição');
+    }
+  }
+
+  // Função para excluir valor
+  async function excluirValor(dataVigencia) {
+    if (confirm('Tem certeza que deseja excluir este valor padrão?')) {
+      try {
+        const resposta = await fetch(`/valores/${dataVigencia}`, {
+          method: 'DELETE'
+        });
+
+        if (resposta.ok) {
+          alert('Valor excluído com sucesso!');
+          carregarValores();
+        } else {
+          const erro = await resposta.json();
+          alert('Erro ao excluir: ' + erro.erro);
+        }
+      } catch (error) {
+        console.error('Erro ao excluir valor:', error);
+        alert('Erro ao excluir valor padrão');
+      }
+    }
+  }
+
+  // Função para cancelar edição
+  function cancelarEdicao() {
+    modoEdicao = false;
+    editandoDataVigencia.value = '';
+    
+    // Reabilitar campo data de vigência
+    document.getElementById('dataVigencia').disabled = false;
+    
+    // Restaurar interface
+    submitBtn.textContent = 'Salvar Valores';
+    cancelBtn.style.display = 'none';
+    
+    // Limpar formulário
+    valoresForm.reset();
+  }
+
+  // Event listener para botão cancelar
+  cancelBtn.addEventListener('click', cancelarEdicao);
+
+  // Carregar valores ao inicializar
   carregarValores();
 
+  // Event listener para o formulário
   valoresForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -111,23 +209,57 @@
       valor_kg: parseFloat(valorKg)
     };
 
-    const resposta = await fetch('/valores', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(dados)
-    });
+    try {
+      let resposta;
+      
+      if (modoEdicao) {
+        // Atualizar registro existente
+        resposta = await fetch(`/valores/${editandoDataVigencia.value}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            data_fim: dataFim,
+            valor_livre: parseFloat(valorLivre),
+            valor_marmita: parseFloat(valorMarmita),
+            valor_kg: parseFloat(valorKg)
+          })
+        });
+      } else {
+        // Criar novo registro
+        resposta = await fetch('/valores', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(dados)
+        });
+      }
 
-    if (resposta.ok) {
-      alert('Valores salvos com sucesso!');
-      valoresForm.reset();
-      carregarValores();
-    } else {
-      const erro = await resposta.json();
-      alert('Erro ao salvar: ' + erro.erro);
+      if (resposta.ok) {
+        alert(modoEdicao ? 'Valores atualizados com sucesso!' : 'Valores salvos com sucesso!');
+        
+        if (modoEdicao) {
+          cancelarEdicao();
+        } else {
+          valoresForm.reset();
+        }
+        
+        carregarValores();
+      } else {
+        const erro = await resposta.json();
+        alert('Erro ao salvar: ' + erro.erro);
+      }
+    } catch (error) {
+      console.error('Erro ao processar formulário:', error);
+      alert('Erro ao processar dados');
     }
   });
+
+  // Tornar funções globais para uso nos botões
+  window.editarValor = editarValor;
+  window.excluirValor = excluirValor;
 </script>
 
 </body>
