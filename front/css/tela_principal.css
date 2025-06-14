@@ -1,76 +1,148 @@
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: 'Roboto', Arial, sans-serif;
+  width: 100vw;
+  min-height: 100vh;
+  background: #fff; /* Fundo branco */
+}
 
-  body {
-    font-family: 'Roboto', sans-serif;
-    min-height: 100vh;
-    background: linear-gradient(to right, #f8f9fa, #e8f0ea);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-  }
+.main-bg {
+  background: #fff; /* Fundo branco */
+  min-height: 100vh;
+  min-width: 100vw;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
 
-  .logo {
-    max-width: 320px;
-    margin-top: 30px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
+.container { 
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0;
+}
 
-  .container {
-    background-color: #ffffff;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    text-align: center;
+.header {
+  width: 100vw;
+  background: #a83232; /* Header vermelho */
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 32px;
+  min-height: 80px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-left: 32px;
+}
+
+.logo-box {
+  width: 120px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+}
+
+.logo-box img {
+  max-height: 60px;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+.menu {
+  display: flex;
+  flex-direction: row;
+  gap: 20px; /* Espaçamento reduzido entre as opções */
+  align-items: center;
+  height: 100%;
+}
+
+.menu-option, .menu-option:visited, .menu-option:active {
+  color: #fff; /* Letras brancas */
+  text-decoration: none;
+  font-size: 0.8rem; /* Fonte um pouco menor */
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 80px;
+  transition: color 0.2s, background 0.2s;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.menu-option:hover {
+  background: #6b1c1c;
+  color: #fff;
+  text-decoration: none;
+}
+
+.search-label {
+  color: #a83232;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+  margin-top: 80px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.search-box {
+  max-width: 340px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  border: 1px solid #000;
+  border-radius: 4px;
+  margin-top: 0;      /* Agora o espaçamento está na label */
+  margin-bottom: 12px;
+  box-sizing: border-box;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#searchInput {
     width: 100%;
-    max-width: 420px;
+    max-width: 320px;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 2px solid #7a7d7f;
+    border-radius: 0;
+    font-size: 1.1rem;
+    outline: none;
+    box-shadow: none;
+    transition: border-color 0.2s;
+    color: #222;
   }
-
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 28px;
-    margin-bottom: 30px;
-    color: #b30000;
+  #searchInput:focus {
+    border-color: #555656;
+    background: transparent;
   }
-
-  .btn {
+  #resultBox {
+    width: 100%;
+    max-width: 320px;
+    margin-top: 12px;
+    border-radius: 0;
+    min-height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    width: 100%;
-    padding: 14px;
-    margin: 12px 0;
+    font-size: 1.1rem;
+    color: #f20f0f;
+    box-shadow: none;
     border: none;
-    border-radius: 6px;
-    background-color: #e63946;
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: none;
-    transition: background-color 0.3s, transform 0.2s;
   }
 
-  .btn:hover {
-    background-color: #cc2b3b;
-    transform: translateY(-2px);
-  }
-
-  .btn svg {
-    width: 20px;
-    height: 20px;
-    fill: white;
-  }
-
-  @media (max-width: 500px) {
-    .container {
-      padding: 30px 20px;
-    }
-  }

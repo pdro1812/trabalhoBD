@@ -3,75 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <title>Restaurante Scapini - Menu Principal</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <link href="css/tela_principal.css" rel="stylesheet">
+  <style>
+    /* Centraliza o conteúdo principal */
+    .main-bg {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f5f6fa;
+    }
 
+  </style>
 </head>
 <body>
+  <div class="main-bg">
+    <div class="container">
+      <div class="header">
+        <div class="logo-box">
+          <img src="scapini-logo.jpg">
+        </div>
+        <nav class="menu">
+          <a href="refeicao.html" class="menu-option">
+            <img src="icone_refeicao.png" alt="Ícone de Refeição" class="menu-icon">
+            Refeição
+          </a>
+          <a href="itens_adicionais.html" class="menu-option">
+            <img src="icone_adicionais.png" alt="Ícone de Itens Adicionais" class="menu-icon">
+            Itens Adicionais
+          </a>
+          <a href="clientes_pj.html" class="menu-option">
+            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+              <path d="M16 11c1.66 0 2.99-1.34 2.99-3L19 5c0-1.66-1.34-3-3-3S13 3.34 13 5v3c0 1.66 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3L11 5c0-1.66-1.34-3-3-3S5 3.34 5 5v3c0 1.66 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/>
+            </svg>
+            Gerenciar Clientes pj
+          </a>
+          <a href="valores.html" class="menu-option">
+            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+              <path d="M3 17v-2h18v2H3zm0-5v-2h18v2H3zm0-7v2h18V5H3z"/>
+            </svg>
+            Valores Padrões
+          </a>
+          <a href="pagamentos.html" class="menu-option">
+            <img src="icone_pagamentos.png" alt="Ícone de Pagamentos" class="menu-icon" style="width:18px; height:18px;">
+            Pagamentos
+          </a>
+          <a href="administradores.html" class="menu-option">
+            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
+              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+            </svg>
+            Administradores
+          </a>
+          <a href="categoria.html" class="menu-option">
+            <img src="icone_adicionais.png" alt="Ícone de Categoria" class="menu-icon">
+            Categoria
+          </a>
+        </nav>
+      </div>
+      <div class="search-label">Pesquisar cliente pelo nome</div>
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Digite o nome do cliente..." autocomplete="on">
+      </div>
+      <div id="resultBox"></div>
+      <script>
+        // Exemplo de clientes (substitua pelo seu backend futuramente)
+        const clientes = [
+          "Maria Silva",
+          "João Souza",
+          "Ana Paula",
+          "Carlos Alberto",
+          "Fernanda Lima",
+          "Murilo Scapini"
+        ];
 
-  <!-- Logo -->
-  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+        const searchInput = document.getElementById('searchInput');
+        const resultBox = document.getElementById('resultBox');
 
-  <!-- Container -->
-  <div class="container">
-    <h1>Menu Principal</h1>
-
-    <!-- Botão Refeição -->
-    <a href="refeicao.html" class="btn">
-      <img src="icone_refeicao.png" alt="Ícone de Refeição" width="20" height="20" style="fill: white;">
-      Refeição
-    </a>
-
-    <!-- Itens Adicionais -->
-    <a href="itens_adicionais.html" class="btn">
-      <img src="icone_adicionais.png" alt="Ícone de Refeição" width="20" height="20" style="fill: white;">
-      Itens Adicionais
-    </a>
-
-    <!-- Lista de Clientes -->
-    <a href="clientes_pf.html" class="btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3L19 5c0-1.66-1.34-3-3-3S13 3.34 13 5v3c0 1.66 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3L11 5c0-1.66-1.34-3-3-3S5 3.34 5 5v3c0 1.66 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/>
-      </svg>
-      Gerenciar Clientes pf
-    </a>
-
-        <!-- Lista de Clientes -->
-    <a href="clientes_pj.html" class="btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M16 11c1.66 0 2.99-1.34 2.99-3L19 5c0-1.66-1.34-3-3-3S13 3.34 13 5v3c0 1.66 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3L11 5c0-1.66-1.34-3-3-3S5 3.34 5 5v3c0 1.66 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/>
-      </svg>
-      Gerenciar Clientes pj
-    </a>
-
-    <!-- Botão Valores Padrões -->
-    <a href="valores.html" class="btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M3 17v-2h18v2H3zm0-5v-2h18v2H3zm0-7v2h18V5H3z"/>
-      </svg>
-      Valores Padrões
-    </a>
-
-    <!-- Botão Pagamentos -->
-    <a href="pagamentos.html" class="btn">
-      <img src="icone_pagamentos.png" alt="Ícone de Pagamentos" width="20" height="20" style="fill: white;">
-      Pagamentos
-    </a>
-
-    <!-- Botão Administradores -->
-    <a href="administradores.html" class="btn">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg>
-      Administradores
-    </a>
-
-     <!-- Botão Administradores -->
-     <a href="categoria.html" class="btn">
-      <img src="icone_adicionais.png" alt="Ícone de Refeição" width="20" height="20" style="fill: white;">
-      Categoria
-    </a>
+        searchInput.addEventListener('input', function() {
+          const value = this.value.trim().toLowerCase();
+          if (value === "") {
+            resultBox.textContent = "";
+            return;
+          }
+          // Busca clientes que contenham o texto digitado
+          const encontrados = clientes.filter(nome => nome.toLowerCase().includes(value));
+          if (encontrados.length > 0) {
+            resultBox.innerHTML = encontrados.map(nome => `<span>${nome}</span>`).join('<br>');
+          } else {
+            resultBox.textContent = "Nenhum cliente encontrado.";
+          }
+        });
+      </script>
+    </div>
   </div>
-
 </body>
 </html>
