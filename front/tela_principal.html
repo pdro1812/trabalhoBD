@@ -5,17 +5,9 @@
   <title>Restaurante Scapini - Menu Principal</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
   <link href="css/tela_principal.css" rel="stylesheet">
+  <link href="css/modal.css" rel="stylesheet">
   <style>
-    /* Centraliza o conteúdo principal */
-    .main-bg {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f5f6fa;
-    }
-
-    /* Estilos para os resultados da busca */
+    /* Estilos da caixa de resultados da busca (mantidos aqui por simplicidade) */
     #resultBox {
       margin-top: 10px;
       padding: 10px;
@@ -25,49 +17,33 @@
       max-height: 300px;
       overflow-y: auto;
     }
-
     .cliente-item {
       padding: 8px 12px;
       border-bottom: 1px solid #eee;
       cursor: pointer;
       transition: background-color 0.2s;
     }
-
     .cliente-item:hover {
       background-color: #f8f9fa;
     }
-
     .cliente-item:last-child {
       border-bottom: none;
     }
-
     .cliente-nome {
       font-weight: bold;
       color: #333;
     }
-
     .cliente-info {
       font-size: 0.9em;
       color: #666;
       margin-top: 2px;
     }
-
-    .loading {
+    .loading, .error, .no-results {
       text-align: center;
       color: #666;
       font-style: italic;
     }
-
-    .error {
-      color: #dc3545;
-      text-align: center;
-    }
-
-    .no-results {
-      text-align: center;
-      color: #666;
-      font-style: italic;
-    }
+    .error { color: #dc3545; }
   </style>
 </head>
 <body>
@@ -78,165 +54,125 @@
           <img src="scapini-logo.jpg">
         </div>
         <nav class="menu">
-          <a href="refeicao.html" class="menu-option">
-            <img src="icone_refeicao.png" alt="Ícone de Refeição" class="menu-icon">
-            Refeição
-          </a>
-          <a href="itens_adicionais.html" class="menu-option">
-            <img src="icone_adicionais.png" alt="Ícone de Itens Adicionais" class="menu-icon">
-            Itens Adicionais
-          </a>
-          <a href="clientes_pj.html" class="menu-option">
-            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
-              <path d="M16 11c1.66 0 2.99-1.34 2.99-3L19 5c0-1.66-1.34-3-3-3S13 3.34 13 5v3c0 1.66 1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3L11 5c0-1.66-1.34-3-3-3S5 3.34 5 5v3c0 1.66 1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V20h14v-3.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V20h6v-3.5c0-2.33-4.67-3.5-7-3.5z"/>
-            </svg>
-            Gerenciar Clientes pj
-          </a>
-          <a href="valores.html" class="menu-option">
-            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
-              <path d="M3 17v-2h18v2H3zm0-5v-2h18v2H3zm0-7v2h18V5H3z"/>
-            </svg>
-            Valores Padrões
-          </a>
-          <a href="pagamentos.html" class="menu-option">
-            <img src="icone_pagamentos.png" alt="Ícone de Pagamentos" class="menu-icon" style="width:18px; height:18px;">
-            Pagamentos
-          </a>
-          <a href="administradores.html" class="menu-option">
-            <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#fff">
-              <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-            </svg>
-            Administradores
-          </a>
-          <a href="categoria.html" class="menu-option">
-            <img src="icone_adicionais.png" alt="Ícone de Categoria" class="menu-icon">
-            Categoria
-          </a>
+          <a href="refeicao.html" class="menu-option">Refeição</a>
+          <a href="itens_adicionais.html" class="menu-option">Itens Adicionais</a>
+          <a href="clientes_pj.html" class="menu-option">Gerenciar Clientes pj</a>
+          <a href="valores.html" class="menu-option">Valores Padrões</a>
+          <a href="pagamentos.html" class="menu-option">Pagamentos</a>
+          <a href="administradores.html" class="menu-option">Administradores</a>
+          <a href="categoria.html" class="menu-option">Categoria</a>
         </nav>
       </div>
       <div class="search-label">Pesquisar cliente pelo nome</div>
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Digite o nome do cliente..." autocomplete="on">
+        <input type="text" id="searchInput" placeholder="Digite o nome, CPF ou telefone..." autocomplete="on">
       </div>
       <div id="resultBox"></div>
-      
-      <script>
-        const searchInput = document.getElementById('searchInput');
-        const resultBox = document.getElementById('resultBox');
-        
-        let timeoutId;
-        let clientesCache = []; // Cache para armazenar todos os clientes
-
-        // Função para carregar todos os clientes uma vez
-        async function carregarClientes() {
-          try {
-            console.log('Carregando clientes...');
-            const response = await fetch('/clientes/pf');
-            console.log('Response status:', response.status);
-            
-            if (!response.ok) {
-              throw new Error(`Erro HTTP: ${response.status}`);
-            }
-            
-            const clientes = await response.json();
-            console.log('Clientes recebidos:', clientes);
-            clientesCache = clientes;
-            return clientes;
-          } catch (error) {
-            console.error('Erro ao carregar clientes:', error);
-            resultBox.innerHTML = '<div class="error">Erro ao conectar com o servidor. Verifique o console.</div>';
-            return [];
-          }
-        }
-
-        // Função para filtrar clientes localmente
-        function filtrarClientes(termo) {
-          if (!termo) return [];
-          
-          const termoLower = termo.toLowerCase();
-          return clientesCache.filter(cliente => 
-            cliente.nome.toLowerCase().includes(termoLower) ||
-            cliente.cpf.includes(termo) ||
-            cliente.telefone.includes(termo)
-          );
-        }
-
-        // Função para renderizar os resultados
-        function renderizarResultados(clientes) {
-          if (clientes.length === 0) {
-            resultBox.innerHTML = '<div class="no-results">Nenhum cliente encontrado.</div>';
-            return;
-          }
-
-          const html = clientes.map(cliente => `
-            <div class="cliente-item" onclick="selecionarCliente(${cliente.id_pessoa})">
-              <div class="cliente-nome">${cliente.nome}</div>
-              <div class="cliente-info">
-                CPF: ${cliente.cpf} | Telefone: ${cliente.telefone || 'Não informado'}
-              </div>
-            </div>
-          `).join('');
-
-          resultBox.innerHTML = html;
-        }
-
-        // Função para selecionar um cliente (você pode personalizar conforme necessário)
-        function selecionarCliente(idCliente) {
-          const cliente = clientesCache.find(c => c.id_pessoa === idCliente);
-          if (cliente) {
-            alert(`Cliente selecionado: ${cliente.nome}`);
-            // Aqui você pode implementar a lógica do que fazer quando um cliente é selecionado
-            // Por exemplo: redirecionar para uma página de pedido, armazenar em localStorage, etc.
-          }
-        }
-
-        // Event listener para o campo de busca
-        searchInput.addEventListener('input', function() {
-          const valor = this.value.trim();
-          
-          // Limpa o timeout anterior
-          clearTimeout(timeoutId);
-          
-          if (valor === '') {
-            resultBox.innerHTML = '';
-            return;
-          }
-
-          // Mostra loading
-          resultBox.innerHTML = '<div class="loading">Buscando...</div>';
-
-          // Debounce: espera 300ms após parar de digitar
-          timeoutId = setTimeout(() => {
-            const clientesFiltrados = filtrarClientes(valor);
-            renderizarResultados(clientesFiltrados);
-          }, 300);
-        });
-
-        // Carrega os clientes quando a página é carregada
-        document.addEventListener('DOMContentLoaded', async function() {
-          try {
-            console.log('Página carregada, iniciando busca de clientes...');
-            await carregarClientes();
-            console.log('Clientes carregados no cache:', clientesCache.length);
-            
-            if (clientesCache.length === 0) {
-              console.warn('Nenhum cliente foi carregado. Verifique:');
-              console.warn('1. Se o servidor está rodando na porta 3000');
-              console.warn('2. Se há clientes cadastrados no banco');
-              console.warn('3. Se a rota /clientes/pf está funcionando');
-            }
-          } catch (error) {
-            console.error('Erro ao inicializar clientes:', error);
-            resultBox.innerHTML = '<div class="error">Erro ao carregar dados dos clientes. Verifique o console para mais detalhes.</div>';
-          }
-        });
-
-        // Função para recarregar os clientes (útil se houver adições/edições)
-        function recarregarClientes() {
-          return carregarClientes();
-        }
-      </script>
     </div>
   </div>
+
+  <div id="clienteModal" class="modal-overlay">
+    <div class="modal-content">
+      <span id="closeModal" class="modal-close-button">&times;</span>
+      <h2>Adicionar Refeição</h2>
+      <hr>
+      <div id="modalClientDetails"></div>
+    </div>
+  </div>
+      
+  <script src="js/modal.js"></script>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const resultBox = document.getElementById('resultBox');
+    
+    let timeoutId;
+    let clientesCache = [];
+
+    async function carregarClientes() {
+      try {
+        const response = await fetch('/clientes/pf');
+        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+        
+        const clientes = await response.json();
+        clientesCache = clientes;
+        return clientes;
+      } catch (error) {
+        console.error('Erro ao carregar clientes:', error);
+        resultBox.innerHTML = '<div class="error">Erro ao conectar com o servidor.</div>';
+        return [];
+      }
+    }
+
+    function filtrarClientes(termo) {
+      if (!termo) return [];
+      
+      const termoLower = termo.toLowerCase();
+      return clientesCache.filter(cliente => 
+        cliente.nome.toLowerCase().includes(termoLower) ||
+        (cliente.cpf && cliente.cpf.includes(termo)) ||
+        (cliente.telefone && cliente.telefone.includes(termo))
+      );
+    }
+
+    function renderizarResultados(clientes) {
+      if (clientes.length === 0) {
+        resultBox.innerHTML = '<div class="no-results">Nenhum cliente encontrado.</div>';
+        return;
+      }
+
+      const html = clientes.map(cliente => `
+        <div class="cliente-item" onclick="selecionarCliente(${cliente.id_pessoa})">
+          <div class="cliente-nome">${cliente.nome}</div>
+          <div class="cliente-info">
+            CPF: ${cliente.cpf || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
+          </div>
+        </div>
+      `).join('');
+
+      resultBox.innerHTML = html;
+    }
+
+    // Esta função conecta a busca da tela principal com a lógica do modal
+    function selecionarCliente(idCliente) {
+      const cliente = clientesCache.find(c => c.id_pessoa === idCliente);
+      if (cliente) {
+        // As funções `abrirModal` e `preencherEConfigurarModal` são do arquivo js/modal.js
+        preencherEConfigurarModal(cliente); 
+        abrirModal();
+        
+        searchInput.value = '';
+        resultBox.innerHTML = '';
+      }
+    }
+
+    searchInput.addEventListener('input', function() {
+      const valor = this.value.trim();
+      clearTimeout(timeoutId);
+      
+      if (valor === '') {
+        resultBox.innerHTML = '';
+        return;
+      }
+      resultBox.innerHTML = '<div class="loading">Buscando...</div>';
+
+      timeoutId = setTimeout(() => {
+        const clientesFiltrados = filtrarClientes(valor);
+        renderizarResultados(clientesFiltrados);
+      }, 300);
+    });
+
+    document.addEventListener('DOMContentLoaded', async function() {
+      try {
+        await carregarClientes();
+      } catch (error) {
+        console.error('Erro ao inicializar clientes:', error);
+      }
+    });
+
+    function recarregarClientes() {
+      return carregarClientes();
+    }
+  </script>
 </body>
 </html>
