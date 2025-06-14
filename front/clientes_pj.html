@@ -24,17 +24,18 @@
       </div>
       <div class="form-group">
         <label for="valorLivre">Valor Livre</label>
-        <input type="number" id="valorLivre" required>
+        <input type="number" id="valorLivre" step="0.01" required>
       </div>
       <div class="form-group">
         <label for="valorMarmita">Valor da Marmita</label>
-        <input type="number" id="valorMarmita" required>
+        <input type="number" id="valorMarmita" step="0.01" required>
       </div>
       <div class="form-group">
         <label for="valorKilo">Valor por Kilo</label>
-        <input type="number" id="valorKilo" required>
+        <input type="number" id="valorKilo" step="0.01" required>
       </div>
-      <button type="submit">Adicionar Empresa</button>
+      <button type="submit" id="btnSubmit">Adicionar Empresa</button>
+      <button type="button" id="btnCancelar" style="display: none;">Cancelar Edição</button>
     </form>
 
     <div class="search-box">
@@ -60,96 +61,168 @@
     const form = document.getElementById('formPJ');
     const tabela = document.getElementById('tabelaPJ');
     const busca = document.getElementById('busca');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnCancelar = document.getElementById('btnCancelar');
+    
+    let empresaEditandoId = null;
+
+    // Carregar empresas ao inicializar a página
+    document.addEventListener('DOMContentLoaded', carregarEmpresas);
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const nome = document.getElementById('nome').value;
       const cnpj = document.getElementById('cnpj').value;
-      const valorLivre = document.getElementById('valorLivre').value;
-      const valorMarmita = document.getElementById('valorMarmita').value;
-      const valorKilo = document.getElementById('valorKilo').value;
+      const valorLivre = parseFloat(document.getElementById('valorLivre').value);
+      const valorMarmita = parseFloat(document.getElementById('valorMarmita').value);
+      const valorKilo = parseFloat(document.getElementById('valorKilo').value);
 
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${nome}</td>
-        <td>${cnpj}</td>
-        <td>${valorLivre}</td>
-        <td>${valorMarmita}</td>
-        <td>${valorKilo}</td>
-        <td>
-          <button onclick="editar(this)">Editar</button>
-          <button onclick="excluir(this)">Excluir</button>
-        </td>
-      `;
-      tabela.appendChild(row);
+      try {
+        if (empresaEditandoId) {
+          // Atualizar empresa existente
+          const response = await fetch(`/clientes/pj/${empresaEditandoId}`, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ nome, cnpj, valorLivre, valorMarmita, valorKilo })
+          });
 
-      
-    await fetch('/clientes/pj', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ nome, cnpj, valorLivre, valorMarmita, valorKilo })
+          if (response.ok) {
+            alert('Empresa atualizada com sucesso!');
+            cancelarEdicao();
+          } else {
+            alert('Erro ao atualizar empresa');
+          }
+        } else {
+          // Adicionar nova empresa
+          const response = await fetch('/clientes/pj', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ nome, cnpj, valorLivre, valorMarmita, valorKilo })
+          });
+
+          if (response.ok) {
+            alert('Empresa adicionada com sucesso!');
+          } else {
+            alert('Erro ao adicionar empresa');
+          }
+        }
+
+        form.reset();
+        carregarEmpresas();
+      } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro de conexão');
+      }
     });
 
-    carregarEmpresas();
+    btnCancelar.addEventListener('click', cancelarEdicao);
 
-      
-
+    function cancelarEdicao() {
+      empresaEditandoId = null;
+      btnSubmit.textContent = 'Adicionar Empresa';
+      btnCancelar.style.display = 'none';
       form.reset();
-    });
-
-    function editar(btn) {
-      const row = btn.parentElement.parentElement;
-      const cells = row.children;
-      document.getElementById('nome').value = cells[0].textContent;
-      document.getElementById('cnpj').value = cells[1].textContent;
-      document.getElementById('valorLivre').value = cells[2].textContent;
-      document.getElementById('valorMarmita').value = cells[3].textContent;
-      document.getElementById('valorKilo').value = cells[4].textContent;
-      row.remove();
     }
 
-    function excluir(btn) {
-      btn.parentElement.parentElement.remove();
+    async function carregarEmpresas() {
+      try {
+        tabela.innerHTML = '';
+        const response = await fetch('/clientes/pj');
+        
+        if (!response.ok) {
+          throw new Error('Erro ao carregar empresas');
+        }
+        
+        const empresas = await response.json();
+
+        empresas.forEach(emp => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${emp.nome}</td>
+            <td>${emp.cnpj}</td>
+            <td>R$ ${parseFloat(emp.valor_livre).toFixed(2)}</td>
+            <td>R$ ${parseFloat(emp.valor_marmita).toFixed(2)}</td>
+            <td>R$ ${parseFloat(emp.valor_kg).toFixed(2)}</td>
+            <td>
+              <button onclick="editarEmpresa(${emp.id})">Editar</button>
+              <button onclick="excluirEmpresa(${emp.id}, '${emp.nome}')">Excluir</button>
+            </td>
+          `;
+          tabela.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Erro ao carregar empresas:', error);
+        alert('Erro ao carregar lista de empresas');
+      }
     }
 
+    async function editarEmpresa(id) {
+      try {
+        // Buscar dados da empresa específica
+        const response = await fetch('/clientes/pj');
+        const empresas = await response.json();
+        const empresa = empresas.find(emp => emp.id === id);
+
+        if (empresa) {
+          // Preencher formulário com os dados da empresa
+          document.getElementById('nome').value = empresa.nome;
+          document.getElementById('cnpj').value = empresa.cnpj;
+          document.getElementById('valorLivre').value = empresa.valor_livre;
+          document.getElementById('valorMarmita').value = empresa.valor_marmita;
+          document.getElementById('valorKilo').value = empresa.valor_kg;
+
+          // Configurar modo de edição
+          empresaEditandoId = id;
+          btnSubmit.textContent = 'Atualizar Empresa';
+          btnCancelar.style.display = 'inline-block';
+
+          // Scroll para o formulário
+          form.scrollIntoView({ behavior: 'smooth' });
+        }
+      } catch (error) {
+        console.error('Erro ao buscar empresa:', error);
+        alert('Erro ao carregar dados da empresa');
+      }
+    }
+
+    async function excluirEmpresa(id, nome) {
+      if (confirm(`Tem certeza que deseja excluir a empresa "${nome}"?`)) {
+        try {
+          const response = await fetch(`/clientes/pj/${id}`, {
+            method: 'DELETE'
+          });
+
+          if (response.ok) {
+            alert('Empresa excluída com sucesso!');
+            carregarEmpresas();
+            
+            // Se estava editando esta empresa, cancelar edição
+            if (empresaEditandoId === id) {
+              cancelarEdicao();
+            }
+          } else {
+            alert('Erro ao excluir empresa');
+          }
+        } catch (error) {
+          console.error('Erro ao excluir empresa:', error);
+          alert('Erro de conexão ao excluir empresa');
+        }
+      }
+    }
+
+    // Função de busca
     busca.addEventListener('input', () => {
       const termo = busca.value.toLowerCase();
       Array.from(tabela.children).forEach(row => {
-        row.style.display = [...row.children].some(td =>
-          td.textContent.toLowerCase().includes(termo)
-        ) ? '' : 'none';
+        const textoRow = Array.from(row.children)
+          .slice(0, -1) // Excluir a coluna de ações da busca
+          .map(td => td.textContent.toLowerCase())
+          .join(' ');
+        
+        row.style.display = textoRow.includes(termo) ? '' : 'none';
       });
     });
-
-    async function carregarEmpresas() {
-  tabela.innerHTML = '';
-  const response = await fetch('/clientes/pj');
-  const empresas = await response.json();
-
-  empresas.forEach(emp => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${emp.nome}</td>
-      <td>${emp.cnpj}</td>
-      <td>${emp.valor_livre}</td>
-      <td>${emp.valor_marmita}</td>
-      <td>${emp.valor_kg}</td>
-      <td>
-        <button onclick="editarEmpresa(${emp.id}, this)">Editar</button>
-        <button onclick="excluirEmpresa(${emp.id})">Excluir</button>
-      </td>
-    `;
-    tabela.appendChild(row);
-  });
-}
-
-async function excluirEmpresa(id) {
-  await fetch(`/clientes/pj/${id}`, {
-    method: 'DELETE'
-  });
-  carregarEmpresas();
-}
-
   </script>
 </body>
 </html>
