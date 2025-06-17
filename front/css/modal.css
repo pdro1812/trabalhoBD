@@ -150,3 +150,66 @@
 .action-button-pj:hover {
     opacity: 0.9;
 }
+
+/* modal.css */
+
+.itens-list-container {
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.item-adicional {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.item-adicional:last-child {
+  border-bottom: none;
+}
+
+.item-adicional label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-grow: 1;
+}
+
+.item-adicional input[type="checkbox"] {
+  margin-right: 12px;
+  width: 18px;
+  height: 18px;
+}
+
+.item-adicional .item-valor {
+  font-weight: bold;
+  color: #333;
+}
+
+#resumoPedido {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+#resumoPedido h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 5px;
+}
+
+#resumoPedido p {
+  margin: 5px 0;
+  display: flex;
+  justify-content: space-between;
+}

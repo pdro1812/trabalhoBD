@@ -79,8 +79,25 @@
       <div id="modalClientDetails"></div>
     </div>
   </div>
+
+  <!-- Modal de Itens Adicionais -->
+<div id="itensModal" class="modal-overlay">
+  <div class="modal-content">
+    <span id="closeItensModal" class="modal-close-button">&times;</span>
+    <h3>Selecionar Itens Adicionais</h3>
+    <hr>
+    <div id="itensListContainer" class="itens-list-container"></div>
+    <div class="modal-buttons-container" style="margin-top: 20px;">
+      <button id="confirmarItensBtn" class="modal-button">Confirmar Seleção</button>
+    </div>
+  </div>
+</div>
+
       
   <script src="js/modal.js"></script>
+
+  
+  
 
   <script>
     const searchInput = document.getElementById('searchInput');
@@ -121,8 +138,10 @@
         return;
       }
 
+      // IMPORTANTE: Aqui também precisamos ajustar para passar o objeto cliente inteiro,
+      // pois o novo modal.js pode depender disso no futuro.
       const html = clientes.map(cliente => `
-        <div class="cliente-item" onclick="selecionarCliente(${cliente.id_pessoa})">
+        <div class="cliente-item" onclick='selecionarCliente(${JSON.stringify(cliente)})'>
           <div class="cliente-nome">${cliente.nome}</div>
           <div class="cliente-info">
             CPF: ${cliente.cpf || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
@@ -133,13 +152,12 @@
       resultBox.innerHTML = html;
     }
 
-    // Esta função conecta a busca da tela principal com a lógica do modal
-    function selecionarCliente(idCliente) {
-      const cliente = clientesCache.find(c => c.id_pessoa === idCliente);
+    // FUNÇÃO CORRIGIDA
+    function selecionarCliente(cliente) {
       if (cliente) {
-        // As funções `abrirModal` e `preencherEConfigurarModal` são do arquivo js/modal.js
+        // As funções `preencherEConfigurarModal` e `abrirClienteModal` são do arquivo js/modal.js
         preencherEConfigurarModal(cliente); 
-        abrirModal();
+        abrirClienteModal(); // <-- AQUI ESTAVA O ERRO, AGORA CORRIGIDO
         
         searchInput.value = '';
         resultBox.innerHTML = '';

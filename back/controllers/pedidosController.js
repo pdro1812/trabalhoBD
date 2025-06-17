@@ -59,40 +59,47 @@
 
   // Criar um novo pedido
   router.post('/', async (req, res) => {
-    const { 
-      id_pessoa, 
-      tipo_almoco, 
-      data, 
-      valor_total, 
-      categoria_cliente, 
-      status_pagamento, 
-      id_administrador 
-    } = req.body;
+  // O frontend agora enviará um array 'itensAdicionais' com os IDs
+  const { 
+    id_pessoa, tipo_almoco, data, valor_total, categoria_cliente, 
+    status_pagamento, id_administrador, itensAdicionais 
+  } = req.body;
 
-    // Validação básica de campos obrigatórios
-    if (!id_pessoa || !data || !valor_total) {
-        return res.status(400).json({ erro: 'Campos id_pessoa, data e valor_total são obrigatórios.' });
-    }
+  const client = await pool.connect();
 
-    try {
-      const resultado = await pool.query(
-        `INSERT INTO pedidos 
-          (id_pessoa, tipo_almoco, data, valor_total, categoria_cliente, status_pagamento, id_administrador) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7) 
-        RETURNING *`,
-        [id_pessoa, tipo_almoco, data, valor_total, categoria_cliente, status_pagamento, id_administrador]
-      );
-      res.status(201).json(resultado.rows[0]);
-    } catch (err) {
-      console.error('Erro ao inserir pedido:', err);
-      // Trata erro de chave estrangeira, caso id_pessoa ou id_administrador não existam nas tabelas referenciadas
-      if (err.code === '23503') { 
-        res.status(400).json({ erro: 'Pessoa ou administrador não encontrado.' });
-      } else {
-        res.status(500).json({ erro: 'Erro interno ao criar o pedido.' });
+  try {
+    await client.query('BEGIN'); // Inicia uma transação
+
+    // 1. Insere o pedido principal e obtém o ID do novo pedido
+    const pedidoResult = await client.query(
+      `INSERT INTO pedidos (id_pessoa, tipo_almoco, data, valor_total, categoria_cliente, status_pagamento, id_administrador) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id_pedido`,
+      [id_pessoa, tipo_almoco, data, valor_total, categoria_cliente, status_pagamento, id_administrador]
+    );
+    const id_pedido_novo = pedidoResult.rows[0].id_pedido;
+
+    // 2. Se houver itens adicionais, insere cada um na tabela de ligação
+    if (itensAdicionais && itensAdicionais.length > 0) {
+      for (const id_item of itensAdicionais) {
+        // Supondo que você tenha uma tabela 'pedidos_itens' com (id_pedido, id_item)
+        await client.query(
+          'INSERT INTO pedidos_itens (id_pedido, id_item) VALUES ($1, $2)',
+          [id_pedido_novo, id_item]
+        );
       }
     }
-  });
+
+    await client.query('COMMIT'); // Confirma a transação
+    res.status(201).json({ message: 'Pedido criado com sucesso!', id_pedido: id_pedido_novo });
+
+  } catch (err) {
+    await client.query('ROLLBACK'); // Desfaz a transação em caso de erro
+    console.error(err);
+    res.status(500).json({ message: 'Erro ao criar o pedido.' });
+  } finally {
+    client.release();
+  }
+});
 
   // Atualizar um pedido existente
   router.put('/:id', async (req, res) => {

@@ -1,34 +1,46 @@
-// modal.js ATUALIZADO
+// modal.js ATUALIZADO E COMPLETO
 
-// --- Configuração de Preços (Responda a PERGUNTA 1 para preencher) ---
+// --- Configuração ---
 const PRECOS = {
-    marmita: 20.00, // <-- SUBSTITUA PELO VALOR CORRETO
-    livre: 25.00,   // <-- SUBSTITUA PELO VALOR CORRETO
-    kg: 55.90       // <-- SUBSTITUA PELO VALOR POR KG
+    marmita: 20.00, // Substitua pelo valor correto
+    livre: 25.00,   // Substitua pelo valor correto
+    kg: 55.90       // Substitua pelo valor por kg
 };
 
-// --- Seletores e Funções de Visibilidade do Modal ---
-const modal = document.getElementById('clienteModal');
-const modalDetails = document.getElementById('modalClientDetails');
-const closeModalButton = document.getElementById('closeModal');
+// --- Seletores dos Modais ---
+const clienteModal = document.getElementById('clienteModal');
+const clienteModalDetails = document.getElementById('modalClientDetails');
+const closeClienteModalBtn = document.getElementById('closeModal');
 
-function abrirModal() {
-  if (modal) modal.style.display = 'flex';
+const itensModal = document.getElementById('itensModal');
+const closeItensModalBtn = document.getElementById('closeItensModal');
+const confirmarItensBtn = document.getElementById('confirmarItensBtn');
+const itensListContainer = document.getElementById('itensListContainer');
+
+// --- Gerenciamento de Estado ---
+let cacheItensAdicionais = [];
+let itensAdicionaisSelecionados = [];
+
+// =================================================================
+// FUNÇÕES DO MODAL PRINCIPAL (CLIENTE)
+// =================================================================
+
+function abrirClienteModal() {
+  if (clienteModal) clienteModal.style.display = 'flex';
 }
 
-function fecharModal() {
-  if (modal) modal.style.display = 'none';
+function fecharClienteModal() {
+  if (clienteModal) clienteModal.style.display = 'none';
 }
 
-/**
- * Preenche o modal com dados do cliente e configura eventos.
- * @param {object} cliente - O objeto do cliente selecionado.
- */
 function preencherEConfigurarModal(cliente) {
-    if (!modalDetails || !cliente) return;
-    modal.dataset.clienteId = cliente.id_pessoa;
+    if (!clienteModalDetails || !cliente) return;
     
-    modalDetails.innerHTML = `
+    // Reseta o estado para um novo pedido
+    itensAdicionaisSelecionados = [];
+    clienteModal.dataset.clienteId = cliente.id_pessoa;
+    
+    clienteModalDetails.innerHTML = `
       <div class="details-grid">
         <div class="client-data"><p><strong>Nome:</strong> ${cliente.nome}</p></div>
         <div class="company-data"><p><strong>Empresa:</strong> ${cliente.empresa || 'Cliente sem vínculo'}</p></div>
@@ -45,121 +57,197 @@ function preencherEConfigurarModal(cliente) {
             <input type="number" id="peso_kg" name="peso_kg" step="0.01" placeholder="Ex: 0.550">
         </div>
       </div>
+
+      <div id="resumoPedido"></div>
+
       <div class="modal-section modal-buttons-container">
-         <div></div>
          <div>
-            <button id="addOrderBtn" class="action-button-pf">Adicionar Pedido</button>
+            <button id="addExtraItemBtn" class="modal-button">Adicionar Itens Extras</button>
+         </div>
+         <div>
+            <button id="addOrderBtn" class="action-button-pf">Finalizar Pedido</button>
          </div>
       </div>
       <div id="modal-feedback" class="modal-feedback"></div>
     `;
-    setupModalEventListeners(cliente);
+    setupClienteModalEventListeners();
+    atualizarResumoPedido(); // Atualiza a UI com os valores iniciais
 }
 
-/**
- * Configura os event listeners para os elementos do modal.
- * @param {object} cliente
- */
-function setupModalEventListeners(cliente) {
-    document.querySelectorAll('input[name="tipo_refeicao"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            document.getElementById('kg-quantity-container').style.display = (this.value === 'kg') ? 'block' : 'none';
-        });
+function setupClienteModalEventListeners() {
+    document.querySelectorAll('input[name="tipo_refeicao"], #peso_kg').forEach(el => {
+        el.addEventListener('change', atualizarResumoPedido);
+        el.addEventListener('keyup', atualizarResumoPedido);
     });
-
-    document.getElementById('addOrderBtn').addEventListener('click', adicionarPedido);
+    document.getElementById('addExtraItemBtn').addEventListener('click', abrirModalItens);
+    document.getElementById('addOrderBtn').addEventListener('click', finalizarPedido);
 }
 
-/**
- * Função principal: Coleta dados, calcula valor e envia para a API.
- */
-async function adicionarPedido() {
+function atualizarResumoPedido() {
+    const resumoContainer = document.getElementById('resumoPedido');
+    if (!resumoContainer) return;
+
+    const { valorRefeicao } = calcularValorRefeicao();
+    const valorItens = itensAdicionaisSelecionados.reduce((acc, item) => acc + parseFloat(item.valor), 0);
+    const valorTotal = valorRefeicao + valorItens;
+
+    let itensHtml = itensAdicionaisSelecionados.map(item => `
+        <p><span>- ${item.nome_item}</span> <span>R$ ${parseFloat(item.valor).toFixed(2)}</span></p>
+    `).join('');
+
+    resumoContainer.innerHTML = `
+        <h5>Resumo do Pedido</h5>
+        <p><span>Valor Refeição:</span> <strong>R$ ${valorRefeicao.toFixed(2)}</strong></p>
+        ${itensAdicionaisSelecionados.length > 0 ? '<h6>Itens Adicionais:</h6>' + itensHtml : ''}
+        <hr>
+        <p><span>TOTAL:</span> <strong>R$ ${valorTotal.toFixed(2)}</strong></p>
+    `;
+}
+
+async function finalizarPedido() {
     const feedbackEl = document.getElementById('modal-feedback');
     feedbackEl.innerHTML = '';
 
-    // --- 1. Obter ID do Administrador (Responda a PERGUNTA 2) ---
-
-
-    // --- 2. Coletar Dados do Formulário ---
-    const id_pessoa = parseInt(modal.dataset.clienteId);
-    const tipoRefeicaoLower = document.querySelector('input[name="tipo_refeicao"]:checked').value; // "kg", "livre", "marmita"
-    const inputPeso = document.getElementById('peso_kg');
-    let valor_total = 0;
-    
-    // --- 3. Calcular Valor Total ---
-    if (tipoRefeicaoLower === 'kg') {
-        const peso = parseFloat(inputPeso.value);
-        if (isNaN(peso) || peso <= 0) {
-            feedbackEl.textContent = 'Erro: O peso deve ser um número válido e maior que zero.';
-            feedbackEl.style.color = '#dc3545';
-            return;
-        }
-        valor_total = peso * PRECOS.kg;
-    } else {
-        valor_total = PRECOS[tipoRefeicaoLower];
+    const idAdministrador = '13910188095'; // Exemplo! Ajuste conforme sua realidade
+    if (!idAdministrador) {
+        feedbackEl.textContent = 'Erro: Administrador não identificado. Faça login novamente.';
+        return;
     }
 
-    // --- 4. Montar o Objeto de Dados para a API ---
-    // Ajustando os dados para bater com o JSON esperado pelo backend
+    const { valorRefeicao, tipoRefeicaoLower, peso } = calcularValorRefeicao();
+    if (valorRefeicao < 0) { // Erro de validação do peso
+        feedbackEl.textContent = 'Erro: O peso deve ser um número válido e maior que zero.';
+        return;
+    }
+    const valorItens = itensAdicionaisSelecionados.reduce((acc, item) => acc + parseFloat(item.valor), 0);
+
     const dadosPedido = {
-        id_pessoa: id_pessoa,
-        tipo_almoco: tipoRefeicaoLower.charAt(0).toUpperCase() + tipoRefeicaoLower.slice(1), // Transforma "livre" em "Livre"
-        data: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
-        valor_total: parseFloat(valor_total.toFixed(2)), // Garante 2 casas decimais
-        categoria_cliente: "Pessoa Física", // Por enquanto, fixo. Podemos adaptar para PJ depois.
+        id_pessoa: parseInt(clienteModal.dataset.clienteId),
+        tipo_almoco: tipoRefeicaoLower.charAt(0).toUpperCase() + tipoRefeicaoLower.slice(1),
+        data: new Date().toISOString().split('T')[0],
+        valor_total: parseFloat((valorRefeicao + valorItens).toFixed(2)),
+        categoria_cliente: "Pessoa Física",
         status_pagamento: "Pendente",
-        id_administrador:  '13910188095'
+        id_administrador: idAdministrador,
+        itensAdicionais: itensAdicionaisSelecionados.map(item => item.id_item) // Array de IDs
     };
 
     const addBtn = document.getElementById('addOrderBtn');
     addBtn.disabled = true;
-    feedbackEl.textContent = 'Adicionando pedido...';
-    feedbackEl.style.color = '#333';
+    feedbackEl.textContent = 'Finalizando pedido...';
 
     try {
-        // --- 5. Enviar para a API ---
-        const response = await fetch('http://localhost:3000/pedidos', {
+        const response = await fetch('http://localhost:3000/pedidos', { // Endpoint de Pedidos
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(dadosPedido),
         });
 
-        if (!response.ok) {
-            const erroData = await response.json().catch(() => ({ message: 'Erro ao processar a resposta do servidor.' }));
-            throw new Error(erroData.message || `Erro ${response.status}: Não foi possível adicionar o pedido.`);
-        }
+        if (!response.ok) throw new Error((await response.json()).message || 'Falha no servidor');
 
-        // --- 6. Feedback de Sucesso ---
-        feedbackEl.textContent = 'Pedido adicionado com sucesso!';
-        feedbackEl.style.color = '#28a745';
-
-        setTimeout(() => {
-            fecharModal();
-            // Opcional: recarregar a lista de clientes se necessário
-            // if (typeof recarregarClientes === 'function') {
-            //   recarregarClientes();
-            // }
-        }, 1500);
+        feedbackEl.textContent = 'Pedido finalizado com sucesso!';
+        setTimeout(fecharClienteModal, 1500);
 
     } catch (error) {
-        console.error('Falha ao adicionar pedido:', error);
+        console.error('Falha ao finalizar pedido:', error);
         feedbackEl.textContent = `Erro: ${error.message}`;
-        feedbackEl.style.color = '#dc3545';
         addBtn.disabled = false;
     }
 }
 
-// --- Event listeners para fechar o modal ---
-if (closeModalButton) {
-    closeModalButton.addEventListener('click', fecharModal);
+function calcularValorRefeicao() {
+    const tipoRefeicaoLower = document.querySelector('input[name="tipo_refeicao"]:checked').value;
+    let valorRefeicao = 0;
+    let peso = null;
+
+    if (tipoRefeicaoLower === 'kg') {
+        const inputPeso = document.getElementById('peso_kg');
+        peso = parseFloat(inputPeso.value);
+        if (isNaN(peso) || peso <= 0) {
+            return { valorRefeicao: -1 }; // Código de erro
+        }
+        valorRefeicao = peso * PRECOS.kg;
+    } else {
+        valorRefeicao = PRECOS[tipoRefeicaoLower];
+    }
+    return { valorRefeicao, tipoRefeicaoLower, peso };
 }
-if (modal) {
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) fecharModal();
+
+
+// =================================================================
+// FUNÇÕES DO MODAL DE ITENS ADICIONAIS
+// =================================================================
+
+function abrirModalItens() {
+    if (itensModal) itensModal.style.display = 'flex';
+    if (cacheItensAdicionais.length > 0) {
+        renderizarItensNoModal(cacheItensAdicionais);
+    } else {
+        fetchItensAdicionais();
+    }
+}
+
+function fecharModalItens() {
+    if (itensModal) itensModal.style.display = 'none';
+}
+
+async function fetchItensAdicionais() {
+    try {
+        const response = await fetch('http://localhost:3000/itemadicional'); // Endpoint de Itens
+        if (!response.ok) throw new Error('Erro ao buscar itens');
+        const itens = await response.json();
+        cacheItensAdicionais = itens;
+        renderizarItensNoModal(itens);
+    } catch (error) {
+        itensListContainer.innerHTML = `<div class="error">${error.message}</div>`;
+    }
+}
+
+function renderizarItensNoModal(itens) {
+    if (itens.length === 0) {
+        itensListContainer.innerHTML = '<div class="no-results">Nenhum item adicional cadastrado.</div>';
+        return;
+    }
+
+    const selectedIds = new Set(itensAdicionaisSelecionados.map(i => i.id_item));
+
+    itensListContainer.innerHTML = itens.map(item => `
+        <div class="item-adicional">
+            <label>
+                <input 
+                    type="checkbox" 
+                    class="item-checkbox"
+                    value="${item.id_item}"
+                    data-nome="${item.nome_item}"
+                    data-valor="${item.valor}"
+                    ${selectedIds.has(item.id_item) ? 'checked' : ''}
+                >
+                ${item.nome_item} (${item.categoria})
+            </label>
+            <span class="item-valor">R$ ${parseFloat(item.valor).toFixed(2)}</span>
+        </div>
+    `).join('');
+}
+
+function confirmarSelecaoDeItens() {
+    itensAdicionaisSelecionados = []; // Limpa e reconstrói a lista
+    document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+        itensAdicionaisSelecionados.push({
+            id_item: parseInt(checkbox.value),
+            nome_item: checkbox.dataset.nome,
+            valor: parseFloat(checkbox.dataset.valor)
+        });
     });
+    fecharModalItens();
+    atualizarResumoPedido(); // Atualiza o modal principal com os novos itens e valores
 }
-document.addEventListener('keydown', (event) => {
-    if (event.key === "Escape") fecharModal();
-});
+
+// --- Event Listeners Globais ---
+if (closeClienteModalBtn) closeClienteModalBtn.addEventListener('click', fecharClienteModal);
+if (clienteModal) clienteModal.addEventListener('click', (e) => e.target === clienteModal && fecharClienteModal());
+
+if (closeItensModalBtn) closeItensModalBtn.addEventListener('click', fecharModalItens);
+if (confirmarItensBtn) confirmarItensBtn.addEventListener('click', confirmarSelecaoDeItens);
+if (itensModal) itensModal.addEventListener('click', (e) => e.target === itensModal && fecharModalItens());
+
+document.addEventListener('keydown', (e) => e.key === "Escape" && (fecharClienteModal(), fecharModalItens()));
