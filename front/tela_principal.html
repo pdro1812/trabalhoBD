@@ -7,52 +7,27 @@
   <link href="css/tela_principal.css" rel="stylesheet">
   <link href="css/modal.css" rel="stylesheet">
   <style>
-    /* Estilos da caixa de resultados da busca (mantidos aqui por simplicidade) */
-    #resultBox {
-      margin-top: 10px;
-      padding: 10px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .cliente-item {
-      padding: 8px 12px;
-      border-bottom: 1px solid #eee;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    .cliente-item:hover {
-      background-color: #f8f9fa;
-    }
-    .cliente-item:last-child {
-      border-bottom: none;
-    }
-    .cliente-nome {
-      font-weight: bold;
-      color: #333;
-    }
-    .cliente-info {
-      font-size: 0.9em;
-      color: #666;
-      margin-top: 2px;
-    }
-    .loading, .error, .no-results {
-      text-align: center;
-      color: #666;
-      font-style: italic;
-    }
+    /* Seus estilos existentes */
+    #resultBox { margin-top: 10px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; }
+    .cliente-item { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
+    .cliente-item:hover { background-color: #f8f9fa; }
+    .cliente-nome { font-weight: bold; }
+    .cliente-info { font-size: 0.9em; color: #666; }
+    .loading, .error, .no-results { text-align: center; color: #666; font-style: italic; }
     .error { color: #dc3545; }
+
+    /* Estilos para os itens no modal de itens */
+    .item-adicional { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .item-adicional label { flex-grow: 1; display: flex; flex-direction: column; }
+    .item-valor { font-size: 0.9em; color: #555; }
+    .item-quantity-input { width: 60px; text-align: center; padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-left: 15px; }
   </style>
 </head>
 <body>
   <div class="main-bg">
     <div class="container">
       <div class="header">
-        <div class="logo-box">
-          <img src="scapini-logo.jpg">
-        </div>
+        <div class="logo-box"><img src="scapini-logo.jpg"></div>
         <nav class="menu">
           <a href="refeicao.html" class="menu-option">Refeição</a>
           <a href="itens_adicionais.html" class="menu-option">Itens Adicionais</a>
@@ -76,30 +51,26 @@
       <span id="closeModal" class="modal-close-button">&times;</span>
       <h2>Adicionar Refeição</h2>
       <hr>
-      <div id="modalClientDetails"></div>
+      <div id="modalClientDetails"></div> 
     </div>
   </div>
 
-  <!-- Modal de Itens Adicionais -->
-<div id="itensModal" class="modal-overlay">
-  <div class="modal-content">
-    <span id="closeItensModal" class="modal-close-button">&times;</span>
-    <h3>Selecionar Itens Adicionais</h3>
-    <hr>
-    <div id="itensListContainer" class="itens-list-container"></div>
-    <div class="modal-buttons-container" style="margin-top: 20px;">
-      <button id="confirmarItensBtn" class="modal-button">Confirmar Seleção</button>
+  <div id="itensModal" class="modal-overlay">
+    <div class="modal-content">
+      <span id="closeItensModal" class="modal-close-button">&times;</span>
+      <h3>Selecionar Itens Adicionais</h3>
+      <hr>
+      <div id="itensListContainer" class="itens-list-container"></div>
+      <div class="modal-buttons-container" style="margin-top: 20px;">
+        <button id="confirmarItensBtn" class="modal-button">Confirmar Seleção</button>
+      </div>
     </div>
   </div>
-</div>
 
-      
-  <script src="js/modal.js"></script>
-
-  
-  
+  <script src="js/modal.js" defer></script>
 
   <script>
+    // Este script agora cuida apenas da busca de clientes
     const searchInput = document.getElementById('searchInput');
     const resultBox = document.getElementById('resultBox');
     
@@ -108,22 +79,18 @@
 
     async function carregarClientes() {
       try {
-        const response = await fetch('/clientes/pf');
+        const response = await fetch('/clientes/pf'); // Usando rotas relativas
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         
-        const clientes = await response.json();
-        clientesCache = clientes;
-        return clientes;
+        clientesCache = await response.json();
       } catch (error) {
         console.error('Erro ao carregar clientes:', error);
         resultBox.innerHTML = '<div class="error">Erro ao conectar com o servidor.</div>';
-        return [];
       }
     }
 
     function filtrarClientes(termo) {
       if (!termo) return [];
-      
       const termoLower = termo.toLowerCase();
       return clientesCache.filter(cliente => 
         cliente.nome.toLowerCase().includes(termoLower) ||
@@ -138,26 +105,22 @@
         return;
       }
 
-      // IMPORTANTE: Aqui também precisamos ajustar para passar o objeto cliente inteiro,
-      // pois o novo modal.js pode depender disso no futuro.
+      // 'selecionarCliente' chama as funções de 'modal.js'
       const html = clientes.map(cliente => `
         <div class="cliente-item" onclick='selecionarCliente(${JSON.stringify(cliente)})'>
           <div class="cliente-nome">${cliente.nome}</div>
-          <div class="cliente-info">
-            CPF: ${cliente.cpf || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}
-          </div>
+          <div class="cliente-info">CPF: ${cliente.cpf || 'Não informado'} | Telefone: ${cliente.telefone || 'Não informado'}</div>
         </div>
       `).join('');
-
       resultBox.innerHTML = html;
     }
 
-    // FUNÇÃO CORRIGIDA
+    // A função 'selecionarCliente' agora depende das funções globais do modal.js
     function selecionarCliente(cliente) {
       if (cliente) {
-        // As funções `preencherEConfigurarModal` e `abrirClienteModal` são do arquivo js/modal.js
+        // Estas funções estão definidas em modal.js
         preencherEConfigurarModal(cliente); 
-        abrirClienteModal(); // <-- AQUI ESTAVA O ERRO, AGORA CORRIGIDO
+        abrirClienteModal();
         
         searchInput.value = '';
         resultBox.innerHTML = '';
@@ -180,17 +143,7 @@
       }, 300);
     });
 
-    document.addEventListener('DOMContentLoaded', async function() {
-      try {
-        await carregarClientes();
-      } catch (error) {
-        console.error('Erro ao inicializar clientes:', error);
-      }
-    });
-
-    function recarregarClientes() {
-      return carregarClientes();
-    }
+    document.addEventListener('DOMContentLoaded', carregarClientes);
   </script>
 </body>
 </html>
