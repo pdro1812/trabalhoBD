@@ -1,0 +1,91 @@
+CREATE TABLE administradores (
+    cpf VARCHAR(14),
+    nome VARCHAR(100),
+    email VARCHAR(100),
+    senha VARCHAR(100),
+    CONSTRAINT pk_administradores PRIMARY KEY (cpf)
+);
+
+CREATE TABLE valores_padroes (
+    data_vigencia DATE,
+    data_fim DATE,
+    valor_livre DECIMAL(10, 2),
+    valor_marmita DECIMAL(10, 2),
+    valor_kg DECIMAL(10, 2),
+    CONSTRAINT pk_valores_padroes PRIMARY KEY (data_vigencia)
+);
+
+CREATE TABLE pessoas (
+    id_pessoa SERIAL,
+    nome VARCHAR(100),
+    telefone VARCHAR(20),
+    valor_devido DECIMAL(10, 2),
+    CONSTRAINT pk_pessoas PRIMARY KEY (id_pessoa)
+);
+
+CREATE TABLE empresas (
+    id_pessoa INT,
+    cnpj VARCHAR(18),
+    valor_livre DECIMAL(10, 2),
+    valor_marmita DECIMAL(10, 2),
+    valor_kg DECIMAL(10, 2),
+    CONSTRAINT pk_empresas PRIMARY KEY (id_pessoa),
+    CONSTRAINT fk_empresas_pessoas FOREIGN KEY (id_pessoa) REFERENCES pessoas(id_pessoa)
+);
+
+CREATE TABLE pessoas_fisicas (
+    id_pessoa INT,
+    id_empresa INT,
+    cpf VARCHAR(14),
+    CONSTRAINT pk_pessoas_fisicas PRIMARY KEY (id_pessoa),
+    CONSTRAINT fk_fisicas_pessoas FOREIGN KEY (id_pessoa) REFERENCES pessoas(id_pessoa),
+    CONSTRAINT fk_fisicas_empresas FOREIGN KEY (id_empresa) REFERENCES empresas(id_pessoa)
+);
+
+CREATE TABLE pedidos (
+    id_pedido SERIAL,
+    id_pessoa INT,
+    tipo_almoco VARCHAR(50),
+    data DATE,
+    valor_total DECIMAL(10, 2),
+    categoria_cliente VARCHAR(50),
+    status_pagamento VARCHAR(50),
+    id_administrador VARCHAR(14),
+    CONSTRAINT pk_pedidos PRIMARY KEY (id_pedido),
+    CONSTRAINT fk_pedidos_pessoas FOREIGN KEY (id_pessoa) REFERENCES pessoas(id_pessoa),
+    CONSTRAINT fk_pedidos_admin FOREIGN KEY (id_administrador) REFERENCES administradores(cpf)
+);
+
+CREATE TABLE pagamentos (
+    id_pagamento SERIAL,
+    id_pessoa INT,
+    valor_pago DECIMAL(10, 2),
+    data DATE,
+    forma VARCHAR(50),
+    CONSTRAINT pk_pagamentos PRIMARY KEY (id_pagamento),
+    CONSTRAINT fk_pagamentos_pessoas FOREIGN KEY (id_pessoa) REFERENCES pessoas(id_pessoa)
+);
+
+CREATE TABLE categorias (
+    id_categoria SERIAL,
+    nome VARCHAR(100),
+    CONSTRAINT pk_categorias PRIMARY KEY (id_categoria)
+);
+
+CREATE TABLE itens_adicionais (
+    id_item SERIAL,
+    id_categoria INT,
+    nome_item VARCHAR(100),
+    valor DECIMAL(10, 2),
+    CONSTRAINT pk_itens_adicionais PRIMARY KEY (id_item),
+    CONSTRAINT fk_itens_categoria FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
+);
+
+CREATE TABLE pedidos_itens (
+    id_pedido INT,
+    id_item INT,
+    quantidade INT,
+    CONSTRAINT pk_pedidos_itens PRIMARY KEY (id_pedido, id_item),
+    CONSTRAINT fk_pedido_item_pedido FOREIGN KEY (id_pedido) REFERENCES pedidos(id_pedido),
+    CONSTRAINT fk_pedido_item_item FOREIGN KEY (id_item) REFERENCES itens_adicionais(id_item)
+);
