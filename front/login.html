@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login - Administrador</title>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f1f1f1;
+    }
+    .login-container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+      width: 300px;
+    }
+    .login-container h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <h2>Login Admin</h2>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="cpf">CPF:</label>
+        <input type="text" id="cpf" required />
+      </div>
+      <div class="form-group">
+        <label for="senha">Senha:</label>
+        <input type="password" id="senha" required />
+      </div>
+      <button type="submit">Entrar</button>
+      <div class="error" id="errorMsg"></div>
+    </form>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('errorMsg');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const cpf = document.getElementById('cpf').value;
+      const senha = document.getElementById('senha').value;
+
+      try {
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cpf, senha })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.erro || 'Erro ao fazer login';
+        } else {
+          localStorage.setItem('admin', JSON.stringify(data.admin));
+          window.location.href = 'tela_principal.html';
+        }
+
+      } catch (err) {
+        errorMsg.textContent = 'Erro na conexão com o servidor.';
+      }
+    });
+  </script>
+
+</body>
+</html>

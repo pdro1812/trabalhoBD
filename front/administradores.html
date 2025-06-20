@@ -1,362 +1,239 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Gerenciar Administradores</title>
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
+  <link href="css/administradores.css" rel="stylesheet">
   <style>
-    /* Custom CSS to override/complement Tailwind where needed */
+    /* Estilos básicos direto no HTML para teste rápido */
     body {
-      font-family: 'Inter', sans-serif; /* Using Inter as requested for general text */
-      background-color: #f3f4f6; /* Light gray background */
+      font-family: 'Roboto', sans-serif;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    #adminForm {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .button-group {
+      margin-top: 20px;
+    }
+
+    .logo {
+      max-width: 150px;
+      display: block;
+      margin: 0 auto 20px;
+    }
+
+    .back-button {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      padding: 1rem;
+      gap: 5px;
+      text-decoration: none;
+      color: #333;
+      margin-bottom: 20px;
     }
 
-    h1 {
-      font-family: 'Playfair Display', serif; /* Keep Playfair Display for titles */
-    }
-
-    /* Message box styling */
-    .message-box {
-      position: fixed;
-      top: 1rem;
-      right: 1rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      z-index: 1000;
-      display: none; /* Hidden by default */
-      font-weight: 500;
-    }
-    .message-box.success {
-      background-color: #d1fae5; /* Green light */
-      color: #065f46; /* Green dark */
-      border: 1px solid #34d399;
-    }
-    .message-box.error {
-      background-color: #fee2e2; /* Red light */
-      color: #991b1b; /* Red dark */
-      border: 1px solid #ef4444;
+    button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      cursor: pointer;
     }
   </style>
 </head>
-<body class="flex flex-col items-center min-h-screen bg-gray-100 p-4">
+<body>
 
-  <!-- Message Box -->
-  <div id="messageBox" class="message-box"></div>
-  <div id="loadingIndicator" class="message-box success" style="display:none;">Carregando...</div>
-
-
-  <!-- Back Button -->
-  <a href="tela_principal.html" class="back-button absolute top-4 left-4 flex items-center bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300 ease-in-out">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+  <a href="tela_principal.html" class="back-button">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
       <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
     </svg>
     Voltar
   </a>
 
-  <!-- Logo -->
-  <img src="https://placehold.co/150x80/000000/FFFFFF?text=Scapini+Logo" alt="Restaurante Scapini" class="logo mt-12 mb-8 rounded-lg shadow-md">
+  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo" />
 
-  <!-- Container -->
-  <div class="container bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl">
-    <h1 class="text-4xl font-bold text-center mb-8 text-gray-800">Gerenciar Administradores</h1>
+  <div class="container">
+    <h1>Gerenciar Administradores</h1>
 
-    <!-- Tabela de administradores -->
-    <div class="overflow-x-auto mb-6">
-      <table class="min-w-full bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700 border-b">Nome</th>
-            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700 border-b">CPF</th>
-            <th class="py-3 px-4 text-left text-sm font-semibold text-gray-700 border-b">Email</th>
-            <th class="py-3 px-4 text-center text-sm font-semibold text-gray-700 border-b w-20">Selecionar</th>
-          </tr>
-        </thead>
-        <tbody id="adminTableBody" class="divide-y divide-gray-200">
-          <!-- Admin rows will be loaded here by JavaScript -->
-        </tbody>
-      </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Email</th>
+          <th>Selecionar</th>
+        </tr>
+      </thead>
+      <tbody id="adminTableBody"></tbody>
+    </table>
+
+    <div class="button-group">
+      <button onclick="toggleAdminForm()">Adicionar Administrador</button>
+      <button onclick="editAdmin()">Editar Administrador</button>
+      <button onclick="removeSelectedAdmins()">Remover Selecionados</button>
     </div>
 
-    <!-- Botões para adicionar, editar e remover -->
-    <div class="button-group flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mb-8">
-      <button onclick="toggleAdminForm()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Adicionar Administrador</button>
-      <button onclick="editAdmin()" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Editar Administrador</button>
-      <button onclick="removeSelectedAdmins()" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Remover Selecionados</button>
-    </div>
-
-    <!-- Formulário para adicionar/editar administrador -->
-    <form id="adminForm" class="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-200" style="display:none;">
-      <h2 class="text-2xl font-semibold mb-6 text-gray-700">Detalhes do Administrador</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="form-group">
-          <label for="adminName" class="block text-sm font-medium text-gray-700 mb-1">Nome</label>
-          <input type="text" id="adminName" placeholder="Digite o nome" required
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-        </div>
-        <div class="form-group">
-          <label for="adminCPF" class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
-          <input type="text" id="adminCPF" placeholder="Digite o CPF (somente números)" required
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-        </div>
-        <div class="form-group md:col-span-2">
-          <label for="adminEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input type="email" id="adminEmail" placeholder="Digite o email" required
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-        </div>
-        <div class="form-group md:col-span-2">
-          <label for="adminPassword" class="block text-sm font-medium text-gray-700 mb-1">Senha (apenas para adicionar ou alterar)</label>
-          <input type="password" id="adminPassword" placeholder="Digite a senha"
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-sm">
-        </div>
+    <form id="adminForm">
+      <div class="form-group">
+        <label for="adminName">Nome:</label>
+        <input type="text" id="adminName" required />
       </div>
-      <button type="submit" class="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">Salvar Administrador</button>
+      <div class="form-group">
+        <label for="adminCPF">CPF:</label>
+        <input type="text" id="adminCPF" required />
+      </div>
+      <div class="form-group">
+        <label for="adminEmail">Email:</label>
+        <input type="email" id="adminEmail" required />
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">Senha:</label>
+        <input type="password" id="adminPassword" required />
+      </div>
+      <button type="submit">Salvar Administrador</button>
     </form>
   </div>
 
   <script>
-    const adminForm = document.getElementById('adminForm');
     const adminTableBody = document.getElementById('adminTableBody');
-    const messageBox = document.getElementById('messageBox');
-    const loadingIndicator = document.getElementById('loadingIndicator');
+    const adminForm = document.getElementById('adminForm');
+    let editingRow = null;
 
-    let editingCpf = null; // Stores the CPF of the admin being edited
-
-    const API_BASE_URL = 'http://localhost:3000/administradores'; // Replace with your backend URL
-
-    // Function to show messages
-    function showMessage(message, type = 'success') {
-      messageBox.textContent = message;
-      messageBox.className = `message-box ${type}`; // Reset classes and add new ones
-      messageBox.style.display = 'block';
-      setTimeout(() => {
-        messageBox.style.display = 'none';
-      }, 3000); // Hide after 3 seconds
-    }
-
-    // Function to show/hide loading indicator
-    function showLoading(show) {
-      loadingIndicator.style.display = show ? 'block' : 'none';
-    }
-
-    // Load administrators from the backend
-    async function loadAdmins() {
-      showLoading(true);
+    // Carregar lista de administradores
+    async function carregarAdministradores() {
       try {
-        const response = await fetch(API_BASE_URL);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        const response = await fetch('/administradores');
         const admins = await response.json();
-        adminTableBody.innerHTML = ''; // Clear existing rows
-
-        if (admins.length === 0) {
-          adminTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">Nenhum administrador encontrado.</td></tr>';
-        } else {
-          admins.forEach(admin => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td class="py-3 px-4 whitespace-nowrap">${admin.nome}</td>
-              <td class="py-3 px-4 whitespace-nowrap">${admin.cpf}</td>
-              <td class="py-3 px-4 whitespace-nowrap">${admin.email}</td>
-              <td class="checkbox-column py-3 px-4 text-center">
-                <input type="checkbox" class="remove-checkbox form-checkbox h-5 w-5 text-blue-600 rounded" data-cpf="${admin.cpf}">
-              </td>
-            `;
-            adminTableBody.appendChild(row);
-          });
-        }
+        adminTableBody.innerHTML = '';
+        admins.forEach(admin => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${admin.nome}</td>
+            <td>${admin.cpf}</td>
+            <td>${admin.email}</td>
+            <td><input type="checkbox" class="remove-checkbox"></td>
+          `;
+          adminTableBody.appendChild(row);
+        });
       } catch (error) {
         console.error('Erro ao carregar administradores:', error);
-        showMessage('Erro ao carregar administradores. Verifique o console.', 'error');
-      } finally {
-        showLoading(false);
       }
     }
 
-    // Toggle visibility of the form
+    window.onload = carregarAdministradores;
+
     function toggleAdminForm() {
-      if (adminForm.style.display === 'block') {
-        adminForm.style.display = 'none';
-      } else {
-        adminForm.style.display = 'block';
-        adminForm.reset(); // Clear form
-        editingCpf = null; // Not editing
-        document.getElementById('adminPassword').required = true; // Password required for new admin
-      }
+      adminForm.style.display = adminForm.style.display === 'none' ? 'block' : 'none';
+      adminForm.reset();
+      editingRow = null;
+      document.getElementById('adminCPF').disabled = false; // CPF habilitado ao adicionar
     }
 
-    // Add or save administrator
     adminForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-
-      const name = document.getElementById('adminName').value;
+      const nome = document.getElementById('adminName').value;
       const cpf = document.getElementById('adminCPF').value;
       const email = document.getElementById('adminEmail').value;
-      const password = document.getElementById('adminPassword').value;
+      const senha = document.getElementById('adminPassword').value;
 
-      // Basic CPF validation (only numbers)
-      if (!/^\d{11}$/.test(cpf)) {
-          showMessage('CPF deve conter exatamente 11 dígitos numéricos.', 'error');
-          return;
-      }
-
-      const adminData = { nome: name, cpf: cpf, email: email };
-
-      showLoading(true);
       try {
-        let response;
-        if (editingCpf) {
-          // Update existing admin
-          if (password) { // Only send password if provided for update
-            adminData.senha = password;
-          }
-          response = await fetch(`${API_BASE_URL}/${editingCpf}`, {
+        if (editingRow) {
+          const oldCpf = editingRow.cells[1].textContent;
+          const response = await fetch(`/administradores/${oldCpf}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(adminData)
+            body: JSON.stringify({ nome, email, senha })
           });
+          if (!response.ok) throw new Error('Erro ao editar');
         } else {
-          // Add new admin
-          if (!password) {
-            showMessage('Senha é obrigatória para adicionar um novo administrador.', 'error');
-            return;
-          }
-          adminData.senha = password;
-          response = await fetch(API_BASE_URL, {
+          const response = await fetch('/administradores', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(adminData)
+            body: JSON.stringify({ cpf, nome, email, senha })
           });
+          if (!response.ok) {
+            const erro = await response.json();
+            alert(erro.erro || 'Erro ao adicionar administrador.');
+            return;
+          }
         }
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.erro || `HTTP error! status: ${response.status}`);
-        }
+        adminForm.reset();
+        adminForm.style.display = 'none';
+        editingRow = null;
+        carregarAdministradores();
 
-        await loadAdmins(); // Reload table
-        toggleAdminForm(); // Hide form
-        showMessage(`Administrador ${editingCpf ? 'atualizado' : 'adicionado'} com sucesso!`);
-      } catch (error) {
-        console.error('Erro ao salvar administrador:', error);
-        showMessage(`Erro ao salvar administrador: ${error.message}`, 'error');
-      } finally {
-        showLoading(false);
+      } catch (err) {
+        alert('Erro ao salvar administrador: ' + err.message);
       }
     });
 
-    // Edit administrator
-    async function editAdmin() {
+    function editAdmin() {
       const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
-      if (checkboxes.length === 0) {
-        showMessage('Por favor, selecione um administrador para editar.', 'error');
-        return;
-      }
-      if (checkboxes.length > 1) {
-        showMessage('Por favor, selecione apenas um administrador para editar.', 'error');
+      if (checkboxes.length !== 1) {
+        alert('Selecione apenas um administrador para editar.');
         return;
       }
 
-      editingCpf = checkboxes[0].dataset.cpf; // Get CPF from data attribute
-
-      showLoading(true);
-      try {
-        const response = await fetch(`${API_BASE_URL}/${editingCpf}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const admin = await response.json(); // Backend should return single admin
-
-        // Populate form
-        document.getElementById('adminName').value = admin.nome;
-        document.getElementById('adminCPF').value = admin.cpf;
-        document.getElementById('adminEmail').value = admin.email;
-        document.getElementById('adminPassword').value = ''; // Clear password for security
-        document.getElementById('adminPassword').required = false; // Password not required for update unless changed
-
-        adminForm.style.display = 'block'; // Show form
-        showMessage('Dados do administrador carregados para edição.');
-      } catch (error) {
-        console.error('Erro ao carregar administrador para edição:', error);
-        showMessage(`Erro ao carregar administrador para edição: ${error.message}`, 'error');
-      } finally {
-        showLoading(false);
-      }
+      editingRow = checkboxes[0].closest('tr');
+      document.getElementById('adminName').value = editingRow.cells[0].textContent;
+      document.getElementById('adminCPF').value = editingRow.cells[1].textContent;
+      document.getElementById('adminCPF').disabled = true; // CPF não pode ser editado
+      document.getElementById('adminEmail').value = editingRow.cells[2].textContent;
+      adminForm.style.display = 'block';
     }
 
-    // Remove selected administrators
     async function removeSelectedAdmins() {
       const checkboxes = document.querySelectorAll('.remove-checkbox:checked');
       if (checkboxes.length === 0) {
-        showMessage('Por favor, selecione administradores para remover.', 'error');
+        alert('Nenhum administrador selecionado.');
         return;
       }
 
-      if (!confirm('Tem certeza que deseja remover os administradores selecionados?')) {
-        return;
-      }
+      if (!confirm('Tem certeza que deseja remover os administradores selecionados?')) return;
 
-      showLoading(true);
-      try {
-        const deletePromises = Array.from(checkboxes).map(async (checkbox) => {
-          const cpfToRemove = checkbox.dataset.cpf;
-          const response = await fetch(`${API_BASE_URL}/${cpfToRemove}`, {
+      for (const checkbox of checkboxes) {
+        const row = checkbox.closest('tr');
+        const cpf = row.cells[1].textContent;
+        try {
+          const response = await fetch(`/administradores/${cpf}`, {
             method: 'DELETE'
           });
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.erro || `Falha ao remover CPF: ${cpfToRemove}, status: ${response.status}`);
-          }
-        });
-        await Promise.all(deletePromises); // Wait for all deletions to complete
-        await loadAdmins(); // Reload table
-        showMessage('Administradores removidos com sucesso!');
-      } catch (error) {
-        console.error('Erro ao remover administradores:', error);
-        showMessage(`Erro ao remover administradores: ${error.message}`, 'error');
-      } finally {
-        showLoading(false);
+          if (!response.ok) throw new Error();
+        } catch (err) {
+          alert('Erro ao remover administrador com CPF: ' + cpf);
+        }
       }
+
+      carregarAdministradores();
     }
-
-    // Custom confirm dialog (replace browser's confirm)
-    function confirm(message) {
-      return new Promise((resolve) => {
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-        modal.innerHTML = `
-          <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full text-center">
-            <p class="mb-6 text-lg font-semibold text-gray-800">${message}</p>
-            <div class="flex justify-center space-x-4">
-              <button id="confirmYes" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300">Sim</button>
-              <button id="confirmNo" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition duration-300">Não</button>
-            </div>
-          </div>
-        `;
-        document.body.appendChild(modal);
-
-        document.getElementById('confirmYes').onclick = () => {
-          modal.remove();
-          resolve(true);
-        };
-        document.getElementById('confirmNo').onclick = () => {
-          modal.remove();
-          resolve(false);
-        };
-      });
-    }
-
-    // Initial load when the page loads
-    window.onload = loadAdmins;
   </script>
 </body>
 </html>

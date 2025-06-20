@@ -1,8 +1,9 @@
+// app.js
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 
-const { validarConexao } = require('./db');
+const { validarConexao } = require('./db'); // Certifique-se de que o caminho para db.js está correto
 
 // --- Rotas ---
 const indexRoutes = require('./routes/index');
@@ -12,7 +13,9 @@ const itensAdicionaisRoutes = require('./controllers/itemAddController');
 const pagamentoRoutes = require('./controllers/pagamentoController');
 const pessoasFisicasRoutes = require('./controllers/clientesPFController');
 const pessoasJuridicasRoutes = require('./controllers/clientesPJController');
-const pedidosRoutes = require('./controllers/pedidosController'); // LINHA ADICIONADA
+const pedidosRoutes = require('./controllers/pedidosController');
+const administradoresRoutes = require('./controllers/administradoresController'); // LINHA ADICIONADA: Importa o novo controlador
+const loginController = require('./controllers/loginController');
 
 const app = express();
 
@@ -33,7 +36,9 @@ app.use('/pagamentos', pagamentoRoutes);
 app.use('/clientes/pf', pessoasFisicasRoutes);
 app.use('/clientes/pj', pessoasJuridicasRoutes);
 app.use('/pedidos', pedidosRoutes);
-app.use('/completos', pedidosRoutes); // LINHA ADICIONADA
+app.use('/completos', pedidosRoutes); // Esta linha parece ser uma rota duplicada para /pedidos
+app.use('/administradores', administradoresRoutes); // LINHA ADICIONADA: Adiciona a rota para administradores
+app.use('/login', loginController);
 
 
 app.listen(3000, () => {
