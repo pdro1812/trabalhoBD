@@ -1,0 +1,90 @@
+     /* Estilos Gerais (sem alterações) */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #1c1e21; text-align: center; margin-bottom: 30px; }
+        .status-info { text-align: center; font-size: 1.2em; padding: 40px; color: #65676b; }
+        .pedido-card { background-color: #fff; border-radius: 8px; border: 1px solid #dddfe2; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); transition: box-shadow 0.3s ease; position: relative; }
+        .pedido-card:hover { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); }
+        .btn-excluir { position: absolute; top: 15px; right: 15px; background-color: #fce8e6; color: #c5221f; border: 1px solid #f2c6c4; border-radius: 50%; width: 32px; height: 32px; font-weight: bold; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; }
+        .btn-excluir:hover { background-color: #e96764; color: #fff; }
+        .pedido-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e9ebee; padding-bottom: 15px; margin-bottom: 15px; padding-right: 35px; }
+        .pedido-header h2 { margin: 0; font-size: 1.4em; color: #0d6efd; }
+        .pedido-header .data { font-size: 0.9em; color: #65676b; }
+        .pedido-body p { margin: 5px 0; font-size: 1em; }
+        .pedido-body p strong { display: inline-block; width: 140px; }
+        .status { font-weight: bold; padding: 3px 8px; border-radius: 5px; color: #fff; }
+        .status.pago { background-color: #28a745; }
+        .status.pendente { background-color: #fd7e14; }
+        .status.cancelado { background-color: #dc3545; }
+        .itens-list { margin-top: 20px; border-top: 1px solid #e9ebee; padding-top: 15px; }
+        .itens-list h3 { margin-top: 0; margin-bottom: 10px; font-size: 1.1em; color: #4b4f56; }
+        .itens-list ul { list-style-type: none; padding: 0; margin: 0; }
+        .sem-itens { font-style: italic; color: #888; font-size: 0.9em; padding: 8px 0; }
+        
+        /* ================================== */
+        /* == NOVOS ESTILOS PARA OS ITENS == */
+        /* ================================== */
+        .itens-list li { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #f0f2f5; 
+            gap: 15px;
+        }
+        .itens-list li:last-child { border-bottom: none; }
+        
+        .item-nome {
+            flex-grow: 1; /* Ocupa o espaço restante */
+        }
+
+        .item-controles {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-quantidade {
+            width: 50px;
+            padding: 5px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .btn-item-acao {
+            background: none;
+            border: 1px solid #ccc;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-salvar-item {
+            color: #28a745; /* Verde */
+            border-color: #28a745;
+        }
+        .btn-salvar-item:hover {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .btn-excluir-item {
+            color: #dc3545; /* Vermelho */
+            border-color: #dc3545;
+        }
+        .btn-excluir-item:hover {
+            background-color: #dc3545;
+            color: white;
+        }

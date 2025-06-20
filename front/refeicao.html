@@ -1,206 +1,245 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Refeição</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto&display=swap" rel="stylesheet">
-  <link href="css/refeicao.css" rel="stylesheet">
-
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos</title>
+      <link href="css/tela_principal.css" rel="stylesheet">
+      <link href="css/lista_pedidos.css" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Botão de voltar -->
-  <a href="tela_principal.html" class="back-button">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-      <path d="M10 19l-7-7 7-7v4h8v6h-8v4z"/>
-    </svg>
-    Voltar
-  </a>
 
-  <!-- Logo -->
-  <img src="scapini-logo.jpg" alt="Restaurante Scapini" class="logo">
+      <div class="header">
+        <div class="logo-box"><img src="scapini-logo.jpg"></div>
+        <nav class="menu">
+          <a href="refeicao.html" class="menu-option">Refeição</a>
+          <a href="itens_adicionais.html" class="menu-option">Itens Adicionais</a>
+          <a href="clientes_pj.html" class="menu-option">Gerenciar Clientes pj</a>
+          <a href="valores.html" class="menu-option">Valores Padrões</a>
+          <a href="pagamentos.html" class="menu-option">Pagamentos</a>
+          <a href="administradores.html" class="menu-option">Administradores</a>
+          <a href="categoria.html" class="menu-option">Categoria</a>
+        </nav>
+      </div>
 
-  <!-- Container -->
-  <div class="container">
-    <h1>Refeição</h1>
-
-    <!-- Tipo de Pessoa -->
-    <div class="form-group">
-      <label for="tipoPessoa">Tipo de Cliente:</label>
-      <select id="tipoPessoa" onchange="exibirCamposPorTipo()">
-        <option value="">Selecione o tipo</option>
-        <option value="fisica">Pessoa Física</option>
-        <option value="juridica">Empresa</option>
-      </select>
+    <div class="container">
+        <h1>Meus Pedidos</h1>
+        <div id="pedidos-container"></div>
     </div>
 
-    <!-- Campos para Jurídica -->
-    <div id="juridicaCampos" style="display: none;">
-      <div class="form-group">
-        <label for="empresa">Empresa:</label>
-        <input list="empresas" id="empresa" name="empresa" placeholder="Digite o nome da empresa">
-        <datalist id="empresas">
-          <option value="Empresa A">
-          <option value="Empresa B">
-          <option value="Empresa C">
-          <option value="Empresa D">
-        </datalist>
-      </div>
+    <script>
+        const container = document.getElementById('pedidos-container');
 
-      <div class="form-group">
-        <label for="cliente">Cliente:</label>
-        <input list="clientes" id="cliente" name="cliente" placeholder="Digite o nome do cliente">
-        <datalist id="clientes">
-          <option value="Carlos Silva">
-          <option value="Ana Lima">
-          <option value="Nome1">
-        </datalist>
-      </div>
-      
-      <div class="form-group">
-        <label for="tipoRefeicao">Tipo de Refeição:</label>
-        <select id="tipoRefeicao" onchange="mostrarCampoPeso('tipoRefeicao', 'campoPeso')">
-          <option value="">Selecione o Tipo de Refeição</option>
-          <option value="refeicaoLivre">Refeição Livre</option>
-          <option value="refeicaoPorKg">Refeição por Kg</option>
-          <option value="marmita">Marmita</option>
-        </select>
-      </div>
-      
-      <div class="form-group" id="campoPeso" style="display: none;">
-        <label for="peso">Peso (kg):</label>
-        <input type="number" id="peso" name="peso" step="0.01" min="0">
-      </div>
-      <!-- Campo para Adicionar Adicional e Quantidade -->
-      <div class="form-group">
-        <label for="adicionalJuridica">Adicionar Adicional:</label>
-        <select id="adicionalJuridica">
-          <option value="">Selecione um Adicional</option>
-          <option value="batataFrita">Batata Frita</option>
-          <option value="salada">Salada</option>
-          <option value="bebida">Bebida</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="quantidadeJuridica">Quantidade:</label>
-        <input type="number" id="quantidadeJuridica" min="1" placeholder="Digite a quantidade do item adicional">
-      </div>
-      <div class="payment-group">
-        <span>Valor: R$ 00,00</span>
-        <button onclick="finalizarPedido('Empresa')">Pagar pela Empresa</button>
-      </div>
-    </div>
+        // Funções auxiliares (sem alterações)
+        function formatarMoeda(valor) { if (isNaN(valor)) return 'R$ 0,00'; return parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+        function formatarData(dataString) { if (!dataString) return 'Data inválida'; const data = new Date(dataString); return data.toLocaleDateString('pt-BR', { timeZone: 'UTC', day: '2-digit', month: '2-digit', year: 'numeric' }); }
+        function getStatusClass(status) { const statusNormalizado = (status || '').toLowerCase(); if (statusNormalizado.includes('pago')) return 'pago'; if (statusNormalizado.includes('pendente')) return 'pendente'; if (statusNormalizado.includes('cancelado')) return 'cancelado'; return ''; }
+        
+        async function carregarPedidos() {
+            container.innerHTML = '<p class="status-info">Carregando pedidos...</p>';
+            try {
+                const response = await fetch('/pedidos/completos');
+                if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
+                const pedidos = await response.json();
+                
+                container.innerHTML = '';
+                if (pedidos.length === 0) {
+                    container.innerHTML = '<p class="status-info">Nenhum pedido encontrado.</p>';
+                    return;
+                }
 
-    <!-- Campos para Física -->
-    <div id="fisicaCampos" style="display: none;">
-      <div class="form-group">
-        <label for="cliente">Cliente:</label>
-        <input list="clientes" id="cliente" name="cliente" placeholder="Digite o nome do cliente">
-        <datalist id="clientes">
-          <option value="Carlos Silva">
-          <option value="Ana Lima">
-          <option value="Nome1">
-        </datalist>
-      </div>
-      
-      <div class="form-group">
-        <label for="tipoRefeicaoFisica">Tipo de Refeição:</label>
-        <select id="tipoRefeicaoFisica" onchange="mostrarCampoPeso('tipoRefeicaoFisica', 'campoPesoFisico')">
-          <option value="">Selecione o Tipo de Refeição</option>
-          <option value="refeicaoLivre">Refeição Livre</option>
-          <option value="refeicaoPorKg">Refeição por Kg</option>
-          <option value="marmita">Marmita</option>
-        </select>
-      </div>
-      
-      <div class="form-group" id="campoPesoFisico" style="display: none;">
-        <label for="pesoFisico">Peso (kg):</label>
-        <input type="number" id="pesoFisico" name="pesoFisico" step="0.01" min="0">
-      </div>
-      <!-- Campo para Adicionar Adicional e Quantidade -->
-      <div class="form-group">
-        <label for="adicionalFisica">Adicionar Adicional:</label>
-        <select id="adicionalFisica">
-          <option value="">Selecione um Adicional</option>
-          <option value="batataFrita">Batata Frita</option>
-          <option value="salada">Salada</option>
-          <option value="bebida">Bebida</option>
-        </select>
-        <input type="number" id="quantidadeFisica" min="1" placeholder="Quantidade">
-        <button type="button" onclick="adicionarAdicionalFisica()">Adicionar</button>
-      </div>
-      <ul id="listaAdicionaisFisica"></ul>
-      <div class="payment-group">
-        <span>Valor: R$ 00,00</span>
-        <button onclick="finalizarPedido('Cliente')">Pagar</button>
-      </div>
-    </div>
-  </div>
+                pedidos.forEach(pedido => {
+                    // Lógica para exibir informações de empresa/PJ
+                    let empresaInfoHtml = '';
+                    let clienteHeader = pedido.nome_pessoa || 'Cliente não identificado'; // Padrão para PF
 
-  <script>
-    function exibirCamposPorTipo() {
-      const tipo = document.getElementById("tipoPessoa").value;
-      document.getElementById("juridicaCampos").style.display = tipo === "juridica" ? "block" : "none";
-      document.getElementById("fisicaCampos").style.display = tipo === "fisica" ? "block" : "none";
-    }
+                    // Verifica se categoria_cliente tem um valor (ou seja, não é null e é um número válido)
+                    if (pedido.categoria_cliente && !isNaN(parseInt(pedido.categoria_cliente))) {
+                        empresaInfoHtml = `
+                            <p><strong>Tipo Cliente:</strong> PJ</p>
+                            <p><strong>ID da Empresa:</strong> ${pedido.categoria_cliente}</p>
+                            ${pedido.nome_empresa ? `<p><strong>Nome da Empresa:</strong> ${pedido.nome_empresa}</p>` : ''}
+                        `;
+                        // Se for PJ e tiver nome da empresa, formata o cabeçalho como "Empresa - Pessoa"
+                        if (pedido.nome_empresa) {
+                            clienteHeader = `${pedido.nome_empresa} - ${pedido.nome_pessoa || 'Cliente não identificado'}`;
+                        } else {
+                            // Caso não tenha nome da empresa, mas seja PJ
+                            clienteHeader = `Empresa ID ${pedido.categoria_cliente} - ${pedido.nome_pessoa || 'Cliente não identificado'}`;
+                        }
+                    } else {
+                        empresaInfoHtml = `<p><strong>Tipo Cliente:</strong> PF</p>`;
+                        // Para PF, mantém apenas o nome da pessoa no cabeçalho
+                        clienteHeader = pedido.nome_pessoa || 'Cliente não identificado';
+                    }
 
+                    const itensHtml = (pedido.itens && pedido.itens.length > 0)
+                        ? pedido.itens.map(item => `
+                            <li id="item-${pedido.id_pedido}-${item.id_item}">
+                                <span class="item-nome">${item.nome_item}</span>
+                                <div class="item-controles">
+                                    <input 
+                                        type="number" 
+                                        class="input-quantidade" 
+                                        value="${item.quantidade}" 
+                                        min="1"
+                                        aria-label="Quantidade de ${item.nome_item}"
+                                        id="qnt-${pedido.id_pedido}-${item.id_item}">
+                                    <button 
+                                        class="btn-item-acao btn-salvar-item" 
+                                        data-id-pedido="${pedido.id_pedido}" 
+                                        data-id-item="${item.id_item}" 
+                                        title="Salvar quantidade">
+                                        &#10003;
+                                    </button>
+                                    <button 
+                                        class="btn-item-acao btn-excluir-item" 
+                                        data-id-pedido="${pedido.id_pedido}" 
+                                        data-id-item="${item.id_item}" 
+                                        title="Excluir item">
+                                        &times;
+                                    </button>
+                                </div>
+                                <span>${formatarMoeda(item.valor)}/un.</span>
+                            </li>
+                        `).join('')
+                        : '';
+                    
+                    const pedidoCardHtml = `
+                        <div class="pedido-card" id="pedido-${pedido.id_pedido}">
+                            <button class="btn-excluir" data-id="${pedido.id_pedido}" title="Excluir pedido completo">&times;</button>
+                            <div class="pedido-header">
+                                <h2>${clienteHeader}</h2>
+                                <span class="data">Pedido #${pedido.id_pedido} - ${formatarData(pedido.data)}</span>
+                            </div>
+                            <div class="pedido-body">
+                                ${empresaInfoHtml}
+                                <p><strong>Tipo de Almoço:</strong> ${pedido.tipo_almoco}</p>
+                                <p><strong>Valor Total:</strong> ${formatarMoeda(pedido.valor_total)}</p>
+                                <p><strong>Pagamento:</strong> 
+                                    <span class="status ${getStatusClass(pedido.status_pagamento)}">
+                                        ${pedido.status_pagamento || 'Não informado'}
+                                    </span>
+                                </p>
+                            </div>
+                            <div class="itens-list">
+                                <h3>Itens Adicionais</h3>
+                                ${itensHtml 
+                                    ? `<ul>${itensHtml}</ul>` 
+                                    : '<p class="sem-itens">Nenhum item adicional neste pedido.</p>'
+                                }
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += pedidoCardHtml;
+                });
+            } catch (error) {
+                console.error('Falha ao carregar pedidos:', error);
+                container.innerHTML = '<p class="status-info" style="color: #dc3545;">Ocorreu um erro ao carregar os pedidos.</p>';
+            }
+        }
 
-    function mostrarCampoPeso(selectId, campoPesoId) {
-      const tipoRefeicao = document.getElementById(selectId).value;
-      const campoPeso = document.getElementById(campoPesoId);
-  
-      if (tipoRefeicao === "refeicaoPorKg") {
-        campoPeso.style.display = "block";
-      } else {
-        campoPeso.style.display = "none";
-      }
-    }
-    
-    function atualizarFuncionarios() {
-      const funcionarioSelect = document.getElementById("funcionario");
-      funcionarioSelect.innerHTML = `
-        <option value="">Selecione o Funcionário</option>
-        <option value="1">João Souza</option>
-        <option value="2">Mariana Costa</option>
-      `;
-    }
+        // Função para excluir o pedido inteiro (sem alterações)
+        async function excluirPedido(id) {
+            if (!confirm(`Tem certeza que deseja excluir o PEDIDO COMPLETO #${id}? Esta ação não pode ser desfeita.`)) return;
+            try {
+                const response = await fetch(`/pedidos/${id}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.erro || 'Falha ao excluir o pedido no servidor.');
+                }
+                // Recarrega a lista para refletir a mudança
+                await carregarPedidos(); 
+            } catch (error) {
+                console.error('Erro ao excluir pedido:', error);
+                alert(`Não foi possível excluir o pedido: ${error.message}`);
+            }
+        }
 
-    function finalizarPedido(pagador) {
-      alert("Pedido finalizado por: " + pagador);
-    }
+        // --- NOVAS FUNÇÕES ---
 
-    let adicionaisFisica = [];
+        async function editarQuantidadeItem(idPedido, idItem) {
+            const inputQuantidade = document.getElementById(`qnt-${idPedido}-${idItem}`);
+            const novaQuantidade = inputQuantidade.value;
 
-    function adicionarAdicionalFisica() {
-      const adicional = document.getElementById('adicionalFisica').value;
-      const quantidade = document.getElementById('quantidadeFisica').value;
-      if (adicional && quantidade > 0) {
-        adicionaisFisica.push({ adicional, quantidade });
-        atualizarListaAdicionaisFisica();
-        document.getElementById('adicionalFisica').value = '';
-        document.getElementById('quantidadeFisica').value = '';
-      }
-    }
+            if (!novaQuantidade || Number(novaQuantidade) <= 0) {
+                alert('Por favor, insira uma quantidade válida maior que zero.');
+                return;
+            }
 
-    function atualizarListaAdicionaisFisica() {
-      const lista = document.getElementById('listaAdicionaisFisica');
-      lista.innerHTML = '';
-      adicionaisFisica.forEach((item, idx) => {
-        const li = document.createElement('li');
-        li.textContent = `${item.adicional} - Quantidade: ${item.quantidade}`;
-        // Botão para remover
-        const btn = document.createElement('button');
-        btn.textContent = 'Remover';
-        btn.onclick = () => {
-          adicionaisFisica.splice(idx, 1);
-          atualizarListaAdicionaisFisica();
-        };
-        li.appendChild(btn);
-        lista.appendChild(li);
-      });
-    }
-  </script>
+            try {
+                const response = await fetch(`/pedidos/${idPedido}/itens/${idItem}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ quantidade: novaQuantidade })
+                });
+
+                const resultado = await response.json();
+                if (!response.ok) {
+                    throw new Error(resultado.erro || 'Falha ao atualizar o item.');
+                }
+                
+                alert(resultado.mensagem);
+                // Recarrega tudo para garantir que o valor total do pedido seja atualizado
+                await carregarPedidos();
+
+            } catch (error) {
+                console.error('Erro ao editar item:', error);
+                alert(`Não foi possível editar o item: ${error.message}`);
+            }
+        }
+
+        async function excluirItem(idPedido, idItem) {
+            if (!confirm(`Tem certeza que deseja remover este item do pedido #${idPedido}?`)) return;
+
+            try {
+                const response = await fetch(`/pedidos/${idPedido}/itens/${idItem}`, {
+                    method: 'DELETE'
+                });
+                
+                const resultado = await response.json();
+                if (!response.ok) {
+                    throw new Error(resultado.erro || 'Falha ao remover o item.');
+                }
+
+                alert(resultado.mensagem);
+                // Recarrega a lista para refletir a remoção e atualizar o valor total
+                await carregarPedidos();
+
+            } catch (error) {
+                console.error('Erro ao remover item:', error);
+                alert(`Não foi possível remover o item: ${error.message}`);
+            }
+        }
+        
+        // --- OUVINTE DE EVENTOS ATUALIZADO ---
+        container.addEventListener('click', function(event) {
+            // Delegação de eventos
+            const btnExcluirPedido = event.target.closest('.btn-excluir');
+            const btnSalvarItem = event.target.closest('.btn-salvar-item');
+            const btnExcluirItem = event.target.closest('.btn-excluir-item');
+
+            if (btnExcluirPedido) {
+                excluirPedido(btnExcluirPedido.dataset.id);
+                return;
+            }
+
+            if (btnSalvarItem) {
+                const { idPedido, idItem } = btnSalvarItem.dataset;
+                editarQuantidadeItem(idPedido, idItem);
+                return;
+            }
+
+            if (btnExcluirItem) {
+                const { idPedido, idItem } = btnExcluirItem.dataset;
+                excluirItem(idPedido, idItem);
+                return;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', carregarPedidos);
+    </script>
+
 </body>
 </html>

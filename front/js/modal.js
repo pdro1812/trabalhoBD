@@ -1,4 +1,4 @@
-// modal.js - CORRIGIDO E ATUALIZADO
+// modal.js - CORRIGIDO E ATUALIZADO para usar cliente.id_empresa para PJ
 
 // --- Configuração ---
 const PRECOS = {
@@ -31,6 +31,13 @@ function abrirClienteModal() {
 
 function fecharClienteModal() {
   if (clienteModal) clienteModal.style.display = 'none';
+  // Limpar feedback e reabilitar botões ao fechar, para a próxima vez que abrir
+  const feedbackEl = document.getElementById('modal-feedback');
+  if (feedbackEl) feedbackEl.innerHTML = '';
+  const btnPf = document.getElementById('addOrderBtnPf');
+  const btnPj = document.getElementById('addOrderBtnPj');
+  if (btnPf) btnPf.disabled = false;
+  if (btnPj) btnPj.disabled = false;
 }
 
 function preencherEConfigurarModal(cliente) {
@@ -38,11 +45,13 @@ function preencherEConfigurarModal(cliente) {
     
     itensAdicionaisSelecionados = [];
     clienteModal.dataset.clienteId = cliente.id_pessoa;
+    // Armazena o id_empresa do cliente no dataset do modal
+    clienteModal.dataset.idEmpresa = cliente.id_empresa || ''; 
     
     clienteModalDetails.innerHTML = `
       <div class="details-grid">
         <div class="client-data"><p><strong>Nome:</strong> ${cliente.nome}</p></div>
-        <div class="company-data"><p><strong>Empresa:</strong> ${cliente.empresa || 'Cliente sem vínculo'}</p></div>
+        <div class="company-data"><p><strong>Empresa:</strong> ${cliente.nome_empresa || 'Cliente sem vínculo'}</p></div>
       </div>
       <div class="modal-section">
         <h4>Tipo de Refeição</h4>
@@ -63,8 +72,9 @@ function preencherEConfigurarModal(cliente) {
          <div>
             <button id="addExtraItemBtn" class="modal-button">Adicionar Itens</button>
          </div>
-         <div>
-            <button id="addOrderBtn" class="action-button-pf">Finalizar Pedido</button>
+         <div class="finalizar-buttons">
+            <button id="addOrderBtnPf" class="action-button-pf">Finalizar Pedido PF</button>
+            <button id="addOrderBtnPj" class="action-button-pj">Finalizar Pedido PJ</button>
          </div>
       </div>
       <div id="modal-feedback" class="modal-feedback"></div>
@@ -74,7 +84,7 @@ function preencherEConfigurarModal(cliente) {
 }
 
 function setupClienteModalEventListeners() {
-    // Esconde/mostra o campo de peso
+    // Esconde/mostra o campo de peso para refeição por KG
     document.querySelectorAll('input[name="tipo_refeicao"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const kgContainer = document.getElementById('kg-quantity-container');
@@ -85,20 +95,20 @@ function setupClienteModalEventListeners() {
 
     document.getElementById('peso_kg').addEventListener('input', atualizarResumoPedido);
     document.getElementById('addExtraItemBtn').addEventListener('click', abrirModalItens);
-    document.getElementById('addOrderBtn').addEventListener('click', finalizarPedido);
+
+    // Event listeners para os novos botões PF e PJ
+    document.getElementById('addOrderBtnPf').addEventListener('click', () => finalizarPedido('PF'));
+    document.getElementById('addOrderBtnPj').addEventListener('click', () => finalizarPedido('PJ'));
 }
 
-// CORRIGIDO: Cálculo e exibição do resumo
 function atualizarResumoPedido() {
     const resumoContainer = document.getElementById('resumoPedido');
     if (!resumoContainer) return;
 
     const { valorRefeicao } = calcularValorRefeicao();
-    // Multiplica o valor do item pela sua quantidade
     const valorItens = itensAdicionaisSelecionados.reduce((acc, item) => acc + (parseFloat(item.valor) * item.quantidade), 0);
     const valorTotal = valorRefeicao + valorItens;
 
-    // Exibe a quantidade no resumo
     let itensHtml = itensAdicionaisSelecionados.map(item => {
         const valorLinha = parseFloat(item.valor) * item.quantidade;
         return `<p><span>- ${item.quantidade}x ${item.nome_item}</span> <span>R$ ${valorLinha.toFixed(2)}</span></p>`
@@ -113,8 +123,7 @@ function atualizarResumoPedido() {
     `;
 }
 
-// CORRIGIDO: Formato do payload enviado ao backend
-async function finalizarPedido() {
+async function finalizarPedido(tipoCliente) { // Agora aceita 'PF' ou 'PJ'
     const feedbackEl = document.getElementById('modal-feedback');
     feedbackEl.innerHTML = '';
 
@@ -131,23 +140,42 @@ async function finalizarPedido() {
     }
     const valorItens = itensAdicionaisSelecionados.reduce((acc, item) => acc + (parseFloat(item.valor) * item.quantidade), 0);
 
+    let categoriaClienteValue = null; // Padrão para PF
+
+    // Lógica para definir a categoria_cliente baseada no id_empresa do cliente
+    if (tipoCliente === 'PJ') {
+        const clienteIdEmpresa = parseInt(clienteModal.dataset.idEmpresa);
+
+        if (isNaN(clienteIdEmpresa) || clienteIdEmpresa <= 0) {
+             feedbackEl.textContent = 'Erro: Cliente não possui vínculo com empresa para pedido PJ.';
+             // Reabilita apenas o botão PJ se for o caso
+             document.getElementById('addOrderBtnPj').disabled = false;
+             return;
+        }
+        categoriaClienteValue = clienteIdEmpresa; // O ID da empresa do cliente será a categoria para PJ
+    }
+    // Se for PF, categoriaClienteValue permanece null
+
     const dadosPedido = {
         id_pessoa: parseInt(clienteModal.dataset.clienteId),
         tipo_almoco: tipoRefeicaoLower.charAt(0).toUpperCase() + tipoRefeicaoLower.slice(1),
         data: new Date().toISOString().split('T')[0],
         valor_total: parseFloat((valorRefeicao + valorItens).toFixed(2)),
-        categoria_cliente: "Pessoa Física",
+        categoria_cliente: categoriaClienteValue, // Dinâmico com base no tipoCliente e id_empresa do cliente
         status_pagamento: "Pendente",
         id_administrador: idAdministrador,
-        // MODIFICADO: Envia o array de objetos {id_item, quantidade}
         itensAdicionais: itensAdicionaisSelecionados.map(item => ({
             id_item: item.id_item,
             quantidade: item.quantidade
         }))
     };
 
-    const addBtn = document.getElementById('addOrderBtn');
-    addBtn.disabled = true;
+    // Desabilitar o botão clicado e o outro também para evitar múltiplos envios
+    const addBtnPf = document.getElementById('addOrderBtnPf');
+    const addBtnPj = document.getElementById('addOrderBtnPj');
+    if (addBtnPf) addBtnPf.disabled = true;
+    if (addBtnPj) addBtnPj.disabled = true;
+
     feedbackEl.textContent = 'Finalizando pedido...';
 
     try {
@@ -157,15 +185,20 @@ async function finalizarPedido() {
             body: JSON.stringify(dadosPedido),
         });
 
-        if (!response.ok) throw new Error((await response.json()).message || 'Falha no servidor');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Falha no servidor');
+        }
 
         feedbackEl.textContent = 'Pedido finalizado com sucesso!';
-        setTimeout(fecharClienteModal, 1500);
+        setTimeout(fecharClienteModal, 1500); // Fecha o modal após sucesso
 
     } catch (error) {
         console.error('Falha ao finalizar pedido:', error);
         feedbackEl.textContent = `Erro: ${error.message}`;
-        addBtn.disabled = false;
+        // Reabilitar ambos os botões em caso de erro
+        if (addBtnPf) addBtnPf.disabled = false;
+        if (addBtnPj) addBtnPj.disabled = false;
     }
 }
 
@@ -180,7 +213,7 @@ function calcularValorRefeicao() {
     if (tipoRefeicaoLower === 'kg') {
         const inputPeso = document.getElementById('peso_kg');
         peso = parseFloat(inputPeso.value);
-        if (isNaN(peso) || peso <= 0) return { valorRefeicao: -1 };
+        if (isNaN(peso) || peso <= 0) return { valorRefeicao: -1 }; // Retorna -1 para indicar erro no peso
         valorRefeicao = peso * PRECOS.kg;
     } else {
         valorRefeicao = PRECOS[tipoRefeicaoLower];
@@ -189,7 +222,7 @@ function calcularValorRefeicao() {
 }
 
 // =================================================================
-// FUNÇÕES DO MODAL DE ITENS ADICIONAIS (MODIFICADO)
+// FUNÇÕES DO MODAL DE ITENS ADICIONAIS
 // =================================================================
 
 function abrirModalItens() {
@@ -217,7 +250,6 @@ async function fetchItensAdicionais() {
     }
 }
 
-// CORRIGIDO: Renderiza inputs de quantidade em vez de checkboxes
 function renderizarItensNoModal(itens) {
     if (itens.length === 0) {
         itensListContainer.innerHTML = '<div class="no-results">Nenhum item adicional cadastrado.</div>';
@@ -248,7 +280,6 @@ function renderizarItensNoModal(itens) {
     `}).join('');
 }
 
-// CORRIGIDO: Coleta a quantidade dos inputs
 function confirmarSelecaoDeItens() {
     itensAdicionaisSelecionados = [];
     document.querySelectorAll('.item-quantity-input').forEach(input => {

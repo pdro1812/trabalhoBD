@@ -48,7 +48,7 @@ CREATE TABLE pedidos (
     tipo_almoco VARCHAR(50),
     data DATE,
     valor_total DECIMAL(10, 2),
-    categoria_cliente VARCHAR(50),
+    categoria_cliente INT,
     status_pagamento VARCHAR(50),
     id_administrador VARCHAR(14),
     CONSTRAINT pk_pedidos PRIMARY KEY (id_pedido),

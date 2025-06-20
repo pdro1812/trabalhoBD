@@ -32,7 +32,8 @@ app.use('/itemadicional', itensAdicionaisRoutes);
 app.use('/pagamentos', pagamentoRoutes);
 app.use('/clientes/pf', pessoasFisicasRoutes);
 app.use('/clientes/pj', pessoasJuridicasRoutes);
-app.use('/pedidos', pedidosRoutes); // LINHA ADICIONADA
+app.use('/pedidos', pedidosRoutes);
+app.use('/completos', pedidosRoutes); // LINHA ADICIONADA
 
 
 app.listen(3000, () => {
