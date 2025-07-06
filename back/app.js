@@ -16,6 +16,7 @@ const pessoasJuridicasRoutes = require('./controllers/clientesPJController');
 const pedidosRoutes = require('./controllers/pedidosController');
 const administradoresRoutes = require('./controllers/administradoresController'); // LINHA ADICIONADA: Importa o novo controlador
 const loginController = require('./controllers/loginController');
+const dividasController = require('./controllers/dividasController');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/clientes/pj', pessoasJuridicasRoutes);
 app.use('/pedidos', pedidosRoutes);
 app.use('/completos', pedidosRoutes); // Esta linha parece ser uma rota duplicada para /pedidos
 app.use('/administradores', administradoresRoutes); // LINHA ADICIONADA: Adiciona a rota para administradores
+app.use('/api/dividas', dividasController);
 app.use('/login', loginController);
 
 

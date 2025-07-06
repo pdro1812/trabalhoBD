@@ -1,0 +1,166 @@
+/* --- Base e Layout --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    min-height: 100vh;
+    background: linear-gradient(to right, #f8f9fa, #e8f0ea);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px;
+}
+
+h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    margin-bottom: 30px;
+    color: #b30000;
+    text-align: center;
+}
+
+/* --- Sistema de Abas --- */
+.main-tabs, .sub-tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #ddd;
+}
+
+.tab-button, .sub-tab-button {
+    padding: 12px 25px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    color: #555;
+    transition: color 0.3s, border-bottom 0.3s;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px; /* Alinha com a borda do container */
+}
+
+.tab-button.active, .sub-tab-button.active {
+    color: #e63946;
+    border-bottom: 3px solid #e63946;
+}
+
+.content-section {
+    padding-top: 20px;
+}
+
+/* --- Tabelas e Listas --- */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 14px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    color: #333;
+}
+
+tr:hover {
+    background-color: #f9f9f9;
+}
+
+td.actions {
+    text-align: right;
+}
+
+.pay-button {
+    background-color: #28a745;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.pay-button:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+}
+
+/* --- Estilo Específico para Pessoa Jurídica (PJ) --- */
+.company-card {
+    background-color: #fdfdfd;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.company-header {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.employee-debt {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.employee-debt:not(:last-child) {
+    border-bottom: 1px dashed #eee;
+}
+
+.employee-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.employee-name {
+    font-weight: bold;
+}
+
+.employee-value {
+    color: #e63946;
+}
+
+/* --- Outros --- */
+.loading-indicator {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #777;
+}
+
+.empty-message {
+    text-align: center;
+    padding: 40px;
+    font-size: 18px;
+    color: #777;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Dívidas</title>
+    <link rel="stylesheet" href="css/dividas.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Controle de Dívidas</h1>
+
+        <div class="main-tabs">
+            <button id="tab-ativas" class="tab-button active">Dívidas Ativas</button>
+            <button id="tab-inativas" class="tab-button">Histórico (Quitadas)</button>
+        </div>
+
+        <div id="content-ativas" class="content-section">
+            <div class="sub-tabs">
+                <button id="tab-pf" class="sub-tab-button active">Pessoa Física</button>
+                <button id="tab-pj" class="sub-tab-button">Pessoa Jurídica</button>
+            </div>
+            
+            <div id="data-container">
+                </div>
+        </div>
+
+        <div id="content-inativas" class="content-section" style="display: none;">
+             <div id="inativas-container">
+                </div>
+        </div>
+        
+        <div id="loading" class="loading-indicator" style="display: none;">
+            Carregando...
+        </div>
+    </div>
+
+    <script src="js/dividas.js"></script>
+</body>
+</html>

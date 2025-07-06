@@ -7,7 +7,7 @@
   <link href="css/tela_principal.css" rel="stylesheet">
   <link href="css/modal.css" rel="stylesheet">
   <style>
-    /* Seus estilos existentes */
+    /* Seus estilos existentes - ESTE BLOCO NÃO FOI ALTERADO */
     #resultBox { margin-top: 10px; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-height: 300px; overflow-y: auto; }
     .cliente-item { padding: 8px 12px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
     .cliente-item:hover { background-color: #f8f9fa; }
@@ -31,7 +31,8 @@
         <nav class="menu">
           <a href="refeicao.html" class="menu-option">Refeição</a>
           <a href="itens_adicionais.html" class="menu-option">Itens Adicionais</a>
-          <a href="clientes_pj.html" class="menu-option">Gerenciar Clientes pj</a>
+          <a href="clientes_pf.html" class="menu-option">Gerenciar Clientes PF</a>
+          <a href="clientes_pj.html" class="menu-option">Gerenciar Clientes PJ</a>
           <a href="valores.html" class="menu-option">Valores Padrões</a>
           <a href="pagamentos.html" class="menu-option">Pagamentos</a>
           <a href="administradores.html" class="menu-option">Administradores</a>
@@ -70,7 +71,6 @@
   <script src="js/modal.js" defer></script>
 
   <script>
-    // Este script agora cuida apenas da busca de clientes
     const searchInput = document.getElementById('searchInput');
     const resultBox = document.getElementById('resultBox');
     
@@ -79,7 +79,7 @@
 
     async function carregarClientes() {
       try {
-        const response = await fetch('/clientes/pf'); // Usando rotas relativas
+        const response = await fetch('/clientes/pf');
         if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
         
         clientesCache = await response.json();
@@ -100,12 +100,22 @@
     }
 
     function renderizarResultados(clientes) {
+      // AJUSTE: O estilo do link de cadastro foi aplicado diretamente via 'style'
       if (clientes.length === 0) {
-        resultBox.innerHTML = '<div class="no-results">Nenhum cliente encontrado.</div>';
+        // Adicionado padding à div e o link estilizado sem alterar o CSS no <head>
+        resultBox.innerHTML = `
+          <div class="no-results" style="padding: 15px;">
+            Nenhum cliente encontrado.
+            <br>
+            <a href="clientes_pf.html" 
+               style="display: inline-block; margin-top: 10px; padding: 8px 15px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-style: normal; font-weight: bold;">
+               Cadastrar Novo Cliente
+            </a>
+          </div>
+        `;
         return;
       }
 
-      // 'selecionarCliente' chama as funções de 'modal.js'
       const html = clientes.map(cliente => `
         <div class="cliente-item" onclick='selecionarCliente(${JSON.stringify(cliente)})'>
           <div class="cliente-nome">${cliente.nome}</div>
@@ -115,11 +125,9 @@
       resultBox.innerHTML = html;
     }
 
-    // A função 'selecionarCliente' agora depende das funções globais do modal.js
     function selecionarCliente(cliente) {
       if (cliente) {
-        // Estas funções estão definidas em modal.js
-        console.log(cliente)
+        console.log(cliente);
         preencherEConfigurarModal(cliente); 
         abrirClienteModal();
         
